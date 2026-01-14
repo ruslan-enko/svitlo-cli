@@ -87,18 +87,18 @@ class UIManager:
             
             if status == 'off':  # Light is OFF
                 off_count += 1
-                # Current time - orange *, others - gray □
+                # Current time - orange ◆, others - gray ◇
                 if hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30)):
-                    timeline_symbols.append(f"[#D96800]*[/#D96800]")  # Orange current time
+                    timeline_symbols.append(f"[#D96800]◆[/#D96800]")  # Orange current time
                 else:
-                    timeline_symbols.append("[#666]□[/#666]")  # Gray no light
+                    timeline_symbols.append("[#666]◇[/#666]")  # Gray no light
             else:  # Light is ON
                 on_count += 1
-                # Current time - orange *, others - white ■
+                # Current time - orange ◆, others - white ●
                 if hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30)):
-                    timeline_symbols.append(f"[#D96800]*[/#D96800]")  # Orange current time
+                    timeline_symbols.append(f"[#D96800]◆[/#D96800]")  # Orange current time
                 else:
-                    timeline_symbols.append("[#fff]■[/#fff]")  # White has light
+                    timeline_symbols.append("[#fff]●[/#fff]")  # White has light
         
         # Update timeline as single string
         timeline_widget = safe_query("timeline-grid", Static, self.app)

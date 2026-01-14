@@ -42,10 +42,11 @@ Screen {
     text-style: bold;
     color: #666; /* Gray color for timeline */
     height: auto;
-    width: 3; /* Larger container for bigger symbols */
+    width: 100%;
     overflow-x: auto;
     overflow-y: auto;
     margin: 1 0;
+    padding: 1; /* Add padding to make symbols appear larger */
 }
 
 
