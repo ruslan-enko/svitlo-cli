@@ -81,20 +81,20 @@ class UIManager:
             
             status = schedule.get(time_str, 'on')
             
-            if status == 'off':  # No light scheduled (but might actually have light)
+            if status == 'off':  # Light is OFF
                 off_count += 1
-                # Show [■] because there might be light, current time - orange, others - white
+                # Current time - orange [*], others - gray [□]
                 if hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30)):
-                    timeline_symbols.append(f"[#D96800][■][/#D96800]")  # Orange current time
+                    timeline_symbols.append(f"[#D96800][*][/#D96800]")  # Orange current time
                 else:
-                    timeline_symbols.append("[#fff][■][/#fff]")  # White normal time
-            else:  # No light scheduled (definitely no light)
+                    timeline_symbols.append("[#666][□][/#666]")  # Gray no light
+            else:  # Light is ON
                 on_count += 1
-                # Show [□] because definitely no light, current time - orange, others - gray
+                # Current time - orange [*], others - white [■]
                 if hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30)):
-                    timeline_symbols.append(f"[#D96800][□][/#D96800]")  # Orange current time
+                    timeline_symbols.append(f"[#D96800][*][/#D96800]")  # Orange current time
                 else:
-                    timeline_symbols.append("[#666][□][/#666]")  # Gray normal time
+                    timeline_symbols.append("[#fff][■][/#fff]")  # White has light
         
         # Update timeline as single string
         timeline_widget = safe_query("timeline-grid", Static, self.app)
@@ -211,7 +211,7 @@ class UIManager:
         on_text = f"{on_hours}год {on_mins}хв" if on_mins > 0 else f"{on_hours}год"
         off_text = f"{off_hours}год {off_mins}хв" if off_mins > 0 else f"{off_hours}год"
         
-        summary = f"[■] є: {on_text}  |  [□] немає: {off_text}"
+        summary = f"[■] є: {on_text}  |  [□] немає: {off_text}  |  [*] зараз"
         safe_widget_update(summary_widget, summary)
         
         # Add color styling to the summary
