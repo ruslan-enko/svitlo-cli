@@ -14,9 +14,7 @@ Screen {
 #timeline-label-1,
 #timeline-label-2,
 #timeline-label-3,
-#timeline-label-4,
-#timeline-label-5,
-#timeline-label-6 {
+#timeline-label-4 {
     text-style: bold;
     color: #D96800;
     margin: 0;
@@ -27,17 +25,17 @@ Screen {
 /* ============ TIMELINE ============ */
 #timeline-container {
     background: #1a1a1a;
-    padding: 1;
+    padding: 0;
     height: auto;
     min-height: 6;
-    border: solid #2a2a2a;
+    border: none;
     width: 100%;
 }
 
 #timeline-label {
     text-style: bold;
     color: #D96800;
-    margin: 1 1 1 1;
+    margin: 0;
     height: auto;
 }
 
@@ -66,22 +64,22 @@ Screen {
     width: 100%;
     overflow-x: auto;
     overflow-y: auto;
-    margin: 1 0;
+    margin: 0;
 }
 
 
 
 #timeline-summary {
     color: #666;
-    margin-top: 0;
+    margin: 0;
 }
 
 /* ============ CONTROLS ============ */
 #controls-container {
     layout: vertical;
-    padding: 1;
+    padding: 0;
     height: auto;
-    border: solid #2a2a2a;
+    border: none;
     margin-top: 1;
     width: 100%;
 }
@@ -114,7 +112,7 @@ Label {
     text-style: bold;
     color: #D96800;
     padding: 0;
-    margin: 0 0 1 0;
+    margin: 0;
     height: auto;
 }
 
@@ -124,14 +122,16 @@ Select {
     border: solid #2a2a2a;
     color: #fff;
     height: auto;
-    margin: 0 0 1 0;
-    padding: 0 1 0 1;
+    width: 30;
+    min-width: 30;
+    margin: 0;
+    padding: 0;
 }
 
 Select>.select--display {
     background: #1a1a1a;
     color: #fff;
-    padding: 0 1 0 1;
+    padding: 0;
     text-style: bold;
 }
 
@@ -153,7 +153,7 @@ Select>.select--list {
 Select>.select--list .select--option {
     background: #1a1a1a;
     color: #fff;
-    padding: 0 1 0 1;
+    padding: 0;
 }
 
 Select>.select--list .select--option:hover {
@@ -186,12 +186,13 @@ Select>.select--list .select--option--is-selected {
     border: solid #2a2a2a;
     width: auto;
     min-width: 20;
+    margin: 0;
 }
 
 #current-group-display {
     color: #D96800;
     text-style: bold;
-    margin-top: 0;
+    margin: 0;
 }
 
 #loading-indicator {

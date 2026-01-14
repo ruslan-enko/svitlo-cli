@@ -14,7 +14,7 @@ import logging
 
 from schedule_fetcher import ScheduleFetcher
 from ui_manager import UIManager
-from config import APP_NAME, APP_VERSION, COLORS, AVAILABLE_GROUPS, DEFAULT_GROUP, UPDATE_INTERVAL, NOTIFICATION_DURATION
+from config import APP_NAME, APP_VERSION, COLORS, AVAILABLE_GROUPS, DEFAULT_GROUP, UPDATE_INTERVAL, DATA_REFRESH_INTERVAL, NOTIFICATION_DURATION
 from utils import setup_logging, handle_ui_errors, safe_query
 import os
 
@@ -49,36 +49,29 @@ class SvitloApp(App):
         self.schedule_data = None
         self.updated = ""
         self.last_notification_time = None
+        self.auto_refresh_enabled = True
         self.logger = logging.getLogger(__name__)
 
     def compose(self) -> ComposeResult:
         """Compose application UI"""
         with Container(id="main-container"):
             with Vertical(id="timeline-container"):
-                # ASCII Art Logo - split for better readability
+                # ASCII Art Logo
                 yield Label(
-                    "███████╗██╗   ██╗██╗████████╗██╗      ██████╗      ██████╗██╗     ██╗",
+                    "           _ __  __           ___ ",
                     id="timeline-label-1"
                 )
                 yield Label(
-                    "██╔════╝██║   ██║██║╚══██╔══╝██║     ██╔═══██╗    ██╔════╝██║     ██║",
+                    "  ____  __(_) /_/ /__    ____/ (_)",
                     id="timeline-label-2"
                 )
                 yield Label(
-                    "███████╗██║   ██║██║   ██║   ██║     ██║   ██║    ██║     ██║     ██║",
+                    " (_-< |/ / / __/ / _ \  / __/ / / ",
                     id="timeline-label-3"
                 )
                 yield Label(
-                    "╚════██║╚██╗ ██╔╝██║   ██║   ██║     ██║   ██║    ██║     ██║     ██║",
+                    "/___/___/_/\__/_/\___/  \__/_/_/  ",
                     id="timeline-label-4"
-                )
-                yield Label(
-                    "███████║ ╚████╔╝ ██║   ██║   ███████╗╚██████╔╝    ╚██████╗███████╗██║",
-                    id="timeline-label-5"
-                )
-                yield Label(
-                    "╚══════╝  ╚═══╝  ╚═╝   ╚═╝   ╚══════╝ ╚═════╝      ╚═════╝╚══════╝╚═╝",
-                    id="timeline-label-6"
                 )
                 
                 # Timeline components
@@ -112,6 +105,7 @@ class SvitloApp(App):
                 )
 
         self.set_interval(UPDATE_INTERVAL, self.update_timer)
+        self.set_interval(DATA_REFRESH_INTERVAL, self._do_auto_refresh)
 
     @handle_ui_errors
     async def on_mount(self) -> None:
@@ -155,6 +149,12 @@ class SvitloApp(App):
             self.ui_manager.check_and_show_notifications(self.schedule_data)
 
         self.ui_manager.update_timer(self.schedule_data)
+
+    def _do_auto_refresh(self) -> None:
+        """Auto-refresh schedule data if enabled"""
+        if self.auto_refresh_enabled and self.schedule_data:
+            self.logger.info("Auto-refreshing schedule data...")
+            self.run_worker(self.load_schedule())
 
     @handle_ui_errors
     def on_button_pressed(self, event: Button.Pressed) -> None:

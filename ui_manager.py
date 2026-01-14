@@ -27,8 +27,8 @@ class UIManager:
         loading_indicator = safe_query("loading-indicator", Static, self.app)
         timer_display = safe_query("timer-display", Static, self.app)
         
-        safe_widget_update(loading_indicator, f"◌ {loading_text}")
-        safe_widget_update(timer_display, f"◌ {updating_text}")
+        safe_widget_update(loading_indicator, f"{loading_text}")
+        safe_widget_update(timer_display, f"{updating_text}")
     
     def show_error(self, error: str) -> None:
         """Display error message to the user"""
