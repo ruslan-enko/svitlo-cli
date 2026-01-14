@@ -203,10 +203,10 @@ class UIManager:
         
         if status == 'off':
             widget.add_class("light-off")
+            safe_widget_update(widget, "[□]")
         else:
             widget.add_class("light-on")
-        
-        safe_widget_update(widget, "")
+            safe_widget_update(widget, "[■]")
     
     def _update_timeline_summary(self, on_count: int, off_count: int) -> None:
         """Update timeline summary statistics"""
