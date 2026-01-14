@@ -39,42 +39,16 @@ Screen {
 }
 
 #timeline-grid {
-    layout: horizontal;
+    text-style: bold;
+    color: #fff;
     height: auto;
     width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
+    margin: 1 0;
 }
 
-.hour-block {
-    background: #1a1a1a;
-    width: 2;
-    min-width: 2;
-    height: 2;
-    content-align: center middle;
-    text-style: bold;
-    color: #666;
-    border: solid #222;
-    box-sizing: border-box;
-}
 
-.hour-block.light-on {
-    background: #1a1a1a;
-    color: #D96800; /* Orange color for [■] when light is on */
-    border: solid #2a2a2a;
-}
-
-.hour-block.light-off {
-    background: #1a1a1a;
-    color: #666; /* Gray color for [□] when light is off */
-    border: solid #2a2a2a;
-}
-
-.hour-block.current {
-    background: #1a1a1a;
-    color: #D96800; /* Orange color for current time indicator */
-    border: double #D96800; /* Orange border for current time */
-}
 
 #timeline-summary {
     color: #666;

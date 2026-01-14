@@ -49,13 +49,7 @@ class SvitloApp(App):
                 yield Label(APP_NAME, id="timeline-label")
                 yield Static("", id="timeline-date")
                 yield Static("[■] є  |  [□] немає", id="timeline-legend")
-                with Container(id="timeline-grid"):
-                    for i in range(48):
-                        yield Static(
-                            "",
-                            classes=f"hour-block halfhour-{i}",
-                            id=f"halfhour-{i}"
-                        )
+                yield Static("", id="timeline-grid")
                 yield Static("", id="timeline-summary")
 
             with Container(id="controls-container"):

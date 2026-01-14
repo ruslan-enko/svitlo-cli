@@ -72,12 +72,9 @@ class UIManager:
         
         on_count = 0
         off_count = 0
+        timeline_symbols = []
         
         for i in range(48):
-            block_widget = safe_query(f"halfhour-{i}", Static, self.app)
-            if not block_widget:
-                continue
-            
             hour = i // 2
             minute = 30 if i % 2 == 1 else 0
             time_str = f"{hour:02d}:{minute:02d} - {hour:02d}:{minute:02d}"
@@ -86,10 +83,24 @@ class UIManager:
             
             if status == 'on':
                 on_count += 1
+                # Current hour - orange, others - white
+                if hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30)):
+                    timeline_symbols.append(f"[#D96800][■][/#D96800]")
+                else:
+                    timeline_symbols.append("[#fff][■][/#fff]")
             else:
                 off_count += 1
-            
-            self._update_hour_block(block_widget, status, now, hour, minute)
+                # Current hour - orange, others - gray
+                if hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30)):
+                    timeline_symbols.append(f"[#D96800][□][/#D96800]")
+                else:
+                    timeline_symbols.append("[#666][□][/#666]")
+        
+        # Update timeline as single string
+        timeline_widget = safe_query("timeline-grid", Static, self.app)
+        if timeline_widget:
+            timeline_str = "".join(timeline_symbols)
+            safe_widget_update(timeline_widget, timeline_str)
         
         self._update_timeline_summary(on_count, off_count)
     
@@ -185,29 +196,7 @@ class UIManager:
                     msg = NOTIFICATIONS['light_going_soon'].format(minutes)
                 self.show_notification(msg)
     
-    def _update_hour_block(self, widget: Static, status: str, now: datetime, hour: int, minute: int) -> None:
-        """Update individual hour block widget"""
-        is_current = (hour == now.hour and 
-                     ((minute == 0 and now.minute < 30) or 
-                      (minute == 30 and now.minute >= 30)))
-        
-        # Update current state class
-        if is_current:
-            widget.add_class("current")
-        else:
-            widget.remove_class("current")
-        
-        # Update status classes
-        widget.remove_class("light-on")
-        widget.remove_class("light-off")
-        
-        if status == 'off':
-            widget.add_class("light-off")
-            safe_widget_update(widget, "[□]")
-        else:
-            widget.add_class("light-on")
-            safe_widget_update(widget, "[■]")
-    
+
     def _update_timeline_summary(self, on_count: int, off_count: int) -> None:
         """Update timeline summary statistics"""
         summary_widget = safe_query("timeline-summary", Static, self.app)
