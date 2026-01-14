@@ -43,12 +43,12 @@ class UIManager:
         timer_display = safe_query("timer-display", Static, self.app)
         
         if self._is_light_on(status):
-            safe_widget_update(timer_display, f"[■] {status} ({data_source})")
+            safe_widget_update(timer_display, f"[□] {status} ({data_source})")
             if timer_display:
                 timer_display.remove_class("status-indicator-off")
                 timer_display.add_class("status-indicator-on")
         else:
-            safe_widget_update(timer_display, f"[□] {status} ({data_source})")
+            safe_widget_update(timer_display, f"[■] {status} ({data_source})")
             if timer_display:
                 timer_display.remove_class("status-indicator-on")
                 timer_display.add_class("status-indicator-off")
@@ -203,10 +203,10 @@ class UIManager:
         
         if status == 'off':
             widget.add_class("light-off")
-            safe_widget_update(widget, "[□]")
+            safe_widget_update(widget, "[■]")
         else:
             widget.add_class("light-on")
-            safe_widget_update(widget, "[■]")
+            safe_widget_update(widget, "[□]")
     
     def _update_timeline_summary(self, on_count: int, off_count: int) -> None:
         """Update timeline summary statistics"""
@@ -222,7 +222,7 @@ class UIManager:
         on_text = f"{on_hours}год {on_mins}хв" if on_mins > 0 else f"{on_hours}год"
         off_text = f"{off_hours}год {off_mins}хв" if off_mins > 0 else f"{off_hours}год"
         
-        summary = f"[■] є: {on_text}  |  [□] немає: {off_text}"
+        summary = f"[□] є: {on_text}  |  [■] немає: {off_text}"
         safe_widget_update(summary_widget, summary)
         
         # Add color styling to the summary

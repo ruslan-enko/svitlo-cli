@@ -60,19 +60,19 @@ Screen {
 
 .hour-block.light-on {
     background: #1a1a1a;
-    color: #D96800; /* Orange color for [■] */
+    color: #fff; /* White color for [□] when light is on */
     border: solid #2a2a2a;
 }
 
 .hour-block.light-off {
     background: #1a1a1a;
-    color: #666; /* Gray color for [□] */
+    color: #666; /* Gray color for [■] when light is off */
     border: solid #2a2a2a;
 }
 
 .hour-block.current {
     background: #1a1a1a;
-    color: #fff; /* White color for current time indicator */
+    color: #D96800; /* Orange color for current time indicator */
     border: double #D96800; /* Orange border for current time */
 }
 
