@@ -46,9 +46,16 @@ class SvitloApp(App):
         """Compose the application UI"""
         with Container(id="main-container"):
             with Vertical(id="timeline-container"):
-                yield Label(APP_NAME, id="timeline-label")
+                yield Label("""
+███████╗██╗   ██╗██╗████████╗██╗      ██████╗      ██████╗██╗     ██╗
+██╔════╝██║   ██║██║╚══██╔══╝██║     ██╔═══██╗    ██╔════╝██║     ██║
+███████╗██║   ██║██║   ██║   ██║     ██║   ██║    ██║     ██║     ██║
+╚════██║╚██╗ ██╔╝██║   ██║   ██║     ██║   ██║    ██║     ██║     ██║
+███████║ ╚████╔╝ ██║   ██║   ███████╗╚██████╔╝    ╚██████╗███████╗██║
+╚══════╝  ╚═══╝  ╚═╝   ╚═╝   ╚══════╝ ╚═════╝      ╚═════╝╚══════╝╚═╝
+""", id="timeline-label")
                 yield Static("", id="timeline-date")
-                yield Static("■ є  |  □ немає  |  * зараз", id="timeline-legend")
+                yield Static("█ є  |  □ немає  |  █ зараз", id="timeline-legend")
                 yield Static("", id="timeline-grid")
                 yield Static("", id="timeline-summary")
 
