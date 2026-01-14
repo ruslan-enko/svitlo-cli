@@ -17,7 +17,7 @@ Screen {
 #timeline-label-4,
 #timeline-label-5,
 #timeline-label-6 {
-    text-style: bold;
+    font-weight: bold;
     color: #D96800;
     margin: 0;
     height: auto;
@@ -35,9 +35,9 @@ Screen {
 }
 
 #timeline-label {
-    text-style: bold;
+    font-weight: bold;
     color: #D96800;
-    margin: 0 0 1 0;
+    margin: 1 1 1 1;
     height: auto;
 }
 
@@ -50,7 +50,7 @@ Screen {
 /* ============ NEXT DAY INDICATOR ============ */
 .next-day-indicator {
     color: #D96800;
-    text-style: bold;
+    font-weight: bold;
 }
 
 #timeline-legend {
@@ -59,8 +59,9 @@ Screen {
 }
 
 #timeline-grid {
-    text-style: bold;
-    color: #666; /* Gray color for timeline */
+    font-weight: bold;
+    color: #666;
+    /* Gray color for timeline */
     height: auto;
     width: 100%;
     overflow-x: auto;
@@ -86,7 +87,7 @@ Screen {
 }
 
 #timer-display {
-    text-style: bold;
+    font-weight: bold;
     text-align: left;
     height: auto;
     color: #fff;
@@ -94,7 +95,7 @@ Screen {
 }
 
 #next-change-info {
-    text-style: bold;
+    font-weight: bold;
     text-align: left;
     color: #888;
     height: auto;
@@ -102,7 +103,7 @@ Screen {
 }
 
 #notification-display {
-    text-style: bold;
+    font-weight: bold;
     text-align: left;
     height: auto;
     color: #D96800;
@@ -110,7 +111,7 @@ Screen {
 }
 
 Label {
-    text-style: bold;
+    font-weight: bold;
     color: #D96800;
     padding: 0;
     margin: 0 0 1 0;
@@ -127,47 +128,47 @@ Select {
     padding: 0 1 0 1;
 }
 
-Select > .select--display {
+Select>.select--display {
     background: #1a1a1a;
     color: #fff;
     padding: 0 1 0 1;
-    text-style: bold;
+    font-weight: bold;
 }
 
-Select > .select--display:hover {
+Select>.select--display:hover {
     background: #222;
     border: solid #D96800;
 }
 
-Select > .select--display:focus {
+Select>.select--display:focus {
     border: solid #D96800;
 }
 
-Select > .select--list {
+Select>.select--list {
     background: #1a1a1a;
     border: solid #2a2a2a;
     max-height: 12;
 }
 
-Select > .select--list .select--option {
+Select>.select--list .select--option {
     background: #1a1a1a;
     color: #fff;
     padding: 0 1 0 1;
 }
 
-Select > .select--list .select--option:hover {
+Select>.select--list .select--option:hover {
     background: #222;
 }
 
-Select > .select--list .select--option-highlight {
+Select>.select--list .select--option-highlight {
     background: #D96800;
     color: #1a1a1a;
 }
 
-Select > .select--list .select--option--is-selected {
+Select>.select--list .select--option--is-selected {
     background: #D96800;
     color: #1a1a1a;
-    text-style: bold;
+    font-weight: bold;
 }
 
 /* ============ ACTIONS ============ */
@@ -179,7 +180,7 @@ Select > .select--list .select--option--is-selected {
     width: 100%;
 }
 
-#actions-container > Button {
+#actions-container>Button {
     background: #1a1a1a;
     color: #888;
     border: solid #2a2a2a;
@@ -189,24 +190,26 @@ Select > .select--list .select--option--is-selected {
 
 #current-group-display {
     color: #D96800;
-    text-style: bold;
+    font-weight: bold;
     margin-top: 0;
 }
 
 #loading-indicator {
     color: #D96800;
-    text-style: bold;
+    font-weight: bold;
     height: auto;
 }
 
 /* ============ STATUS INDICATORS ============ */
 .status-indicator-on {
-    color: #D96800; /* Orange color for active status */
-    text-style: bold;
+    color: #D96800;
+    /* Orange color for active status */
+    font-weight: bold;
 }
 
 .status-indicator-off {
-    color: #666; /* Gray color for inactive status */
+    color: #666;
+    /* Gray color for inactive status */
 }
 
 /* ============ INFO ============ */
