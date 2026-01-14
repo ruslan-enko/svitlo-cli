@@ -44,10 +44,25 @@ STATUS_TEXTS = {
 # Notification messages
 NOTIFICATIONS = {
     'no_light_now': '□ УВАГА: ЗАРАЗ НЕМАЄ СВІТЛА!',
-    'light_coming_soon': '█ СВІТЛО З\'ЯВИТЬСЯ ЧЕРЕЗ {} ХВИЛИН!',
-    'light_going_soon': '□ СВІТЛО ВИМКНЕТЬСЯ ЧЕРЕЗ {} ХВИЛИН!',
-    'next_on': '█ Світло з\'явиться о {}',
-    'next_off': '□ Відключення о {}',
+    'light_coming_soon': '[■] СВІТЛО З\'ЯВИТЬСЯ ЧЕРЕЗ {} ХВИЛИН!',
+    'light_going_soon': '[□] СВІТЛО ВИМКНЕТЬСЯ ЧЕРЕЗ {} ХВИЛИН!',
+    'next_on': '[■] Світло з\'явиться о {}',
+    'next_off': '[□] Відключення о {}',
     'time_to_on': 'Наступне ВВІМКНЕННЯ через: {} год {}хв {}сек',
     'time_to_off': 'Наступне ВИМКНЕННЯ через: {} год {}хв {}сек'
+}
+
+# Additional configuration for better maintainability
+UI_SETTINGS = {
+    'update_interval': 1,
+    'notification_duration': 10,
+    'notification_threshold': 30,
+    'loading_timeout': 30,
+    'theme_colors': {
+        'primary': '#D96800',
+        'success': '#00a853',
+        'error': '#ff4444',
+        'warning': '#ff9800',
+        'info': '#2196f3'
+    }
 }

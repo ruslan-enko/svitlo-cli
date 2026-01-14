@@ -43,17 +43,36 @@ class SvitloApp(App):
         self.logger = logging.getLogger(__name__)
 
     def compose(self) -> ComposeResult:
-        """Compose the application UI"""
+        """Compose application UI"""
         with Container(id="main-container"):
             with Vertical(id="timeline-container"):
-                yield Label("""
-███████╗██╗   ██╗██╗████████╗██╗      ██████╗      ██████╗██╗     ██╗
-██╔════╝██║   ██║██║╚══██╔══╝██║     ██╔═══██╗    ██╔════╝██║     ██║
-███████╗██║   ██║██║   ██║   ██║     ██║   ██║    ██║     ██║     ██║
-╚════██║╚██╗ ██╔╝██║   ██║   ██║     ██║   ██║    ██║     ██║     ██║
-███████║ ╚████╔╝ ██║   ██║   ███████╗╚██████╔╝    ╚██████╗███████╗██║
-╚══════╝  ╚═══╝  ╚═╝   ╚═╝   ╚══════╝ ╚═════╝      ╚═════╝╚══════╝╚═╝
-""", id="timeline-label")
+                # ASCII Art Logo - split for better readability
+                yield Label(
+                    "███████╗██╗   ██╗██╗████████╗██╗      ██████╗      ██████╗██╗     ██╗",
+                    id="timeline-label-1"
+                )
+                yield Label(
+                    "██╔════╝██║   ██║██║╚══██╔══╝██║     ██╔═══██╗    ██╔════╝██║     ██║",
+                    id="timeline-label-2"
+                )
+                yield Label(
+                    "███████╗██║   ██║██║   ██║   ██║     ██║   ██║    ██║     ██║     ██║",
+                    id="timeline-label-3"
+                )
+                yield Label(
+                    "╚════██║╚██╗ ██╔╝██║   ██║   ██║     ██║   ██║    ██║     ██║     ██║",
+                    id="timeline-label-4"
+                )
+                yield Label(
+                    "███████║ ╚████╔╝ ██║   ██║   ███████╗╚██████╔╝    ╚██████╗███████╗██║",
+                    id="timeline-label-5"
+                )
+                yield Label(
+                    "╚══════╝  ╚═══╝  ╚═╝   ╚═╝   ╚══════╝ ╚═════╝      ╚═════╝╚══════╝╚═╝",
+                    id="timeline-label-6"
+                )
+                
+                # Timeline components
                 yield Static("", id="timeline-date")
                 yield Static("■ є  |  □ немає  |  * зараз", id="timeline-legend")
                 yield Static("", id="timeline-grid")

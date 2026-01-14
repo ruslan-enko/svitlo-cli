@@ -10,6 +10,21 @@ Screen {
     width: 100%;
 }
 
+/* ============ LOGO STYLES ============ */
+#timeline-label-1,
+#timeline-label-2,
+#timeline-label-3,
+#timeline-label-4,
+#timeline-label-5,
+#timeline-label-6 {
+    text-style: bold;
+    color: #D96800;
+    margin: 0;
+    height: auto;
+    text-align: center;
+    font-size: 1;
+}
+
 /* ============ TIMELINE ============ */
 #timeline-container {
     background: #1a1a1a;
