@@ -40,12 +40,7 @@ pip install -r requirements.txt
 python3 run.py
 ```
 
-### Method 4: Homebrew (macOS)
 
-Create your own tap or use ready formula:
-```bash
-brew install svitlo-cli
-```
 
 ## 🎮 Usage
 
@@ -101,4 +96,4 @@ The official website https://poweron.loe.lviv.ua has no public API and content i
 - ⬛ Black background (#000000) - Console design
 - ⬜ White (#fff) - Main text
 - ⬛ Dark gray (#666) - Text when no light
-# svitlo-cli
+
