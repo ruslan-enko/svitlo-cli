@@ -32,7 +32,7 @@ class UIManager:
     def show_error(self, error: str) -> None:
         """Display error message to the user"""
         timer_display = safe_query("timer-display", Static, self.app)
-        safe_widget_update(timer_display, f"[□] Помилка: {error}")
+        safe_widget_update(timer_display, f"□ Помилка: {error}")
         self.logger.error(f"Error displayed: {error}")
     
     def update_status_display(self, data: Dict[str, Any]) -> None:
@@ -43,12 +43,12 @@ class UIManager:
         timer_display = safe_query("timer-display", Static, self.app)
         
         if self._is_light_on(status):
-            safe_widget_update(timer_display, f"[■] {status} ({data_source})")
+            safe_widget_update(timer_display, f"■ {status} ({data_source})")
             if timer_display:
                 timer_display.remove_class("status-indicator-off")
                 timer_display.add_class("status-indicator-on")
         else:
-            safe_widget_update(timer_display, f"[□] {status} ({data_source})")
+            safe_widget_update(timer_display, f"□ {status} ({data_source})")
             if timer_display:
                 timer_display.remove_class("status-indicator-on")
                 timer_display.add_class("status-indicator-off")
@@ -87,18 +87,18 @@ class UIManager:
             
             if status == 'off':  # Light is OFF
                 off_count += 1
-                # Current time - orange [*], others - gray [□]
+                # Current time - orange *, others - gray □
                 if hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30)):
-                    timeline_symbols.append(f"[#D96800][*][/#D96800]")  # Orange current time
+                    timeline_symbols.append(f"[#D96800]*[/#D96800]")  # Orange current time
                 else:
-                    timeline_symbols.append("[#666][□][/#666]")  # Gray no light
+                    timeline_symbols.append("[#666]□[/#666]")  # Gray no light
             else:  # Light is ON
                 on_count += 1
-                # Current time - orange [*], others - white [■]
+                # Current time - orange *, others - white ■
                 if hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30)):
-                    timeline_symbols.append(f"[#D96800][*][/#D96800]")  # Orange current time
+                    timeline_symbols.append(f"[#D96800]*[/#D96800]")  # Orange current time
                 else:
-                    timeline_symbols.append("[#fff][■][/#fff]")  # White has light
+                    timeline_symbols.append("[#fff]■[/#fff]")  # White has light
         
         # Update timeline as single string
         timeline_widget = safe_query("timeline-grid", Static, self.app)
@@ -215,7 +215,7 @@ class UIManager:
         on_text = f"{on_hours}год {on_mins}хв" if on_mins > 0 else f"{on_hours}год"
         off_text = f"{off_hours}год {off_mins}хв" if off_mins > 0 else f"{off_hours}год"
         
-        summary = f"[■] є: {on_text}  |  [□] немає: {off_text}  |  [*] зараз"
+        summary = f"■ є: {on_text}  |  □ немає: {off_text}  |  * зараз"
         safe_widget_update(summary_widget, summary)
         
         # Add color styling to the summary
