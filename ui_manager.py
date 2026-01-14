@@ -143,16 +143,17 @@ class UIManager:
                         break
             
             # Determine if current has light based on schedule status
-            current_has_light = (current_status == 'off')  # 'off' means no outage = has light
+            # 'off' in schedule means power outage (NO light), 'on' means has light
+            current_has_light = (current_status == 'on')
             
             if current_has_light:
                 # Currently HAVE light, next will be TURNED OFF
-                timer_text = f"До ввімкнення залишилось: {time_str}"
-                next_text = f"Світло з'явиться о {next_change.strftime('%H:%M')}"
-            else:
-                # Currently NO light, next will be TURNED ON  
                 timer_text = f"До вимкнення залишилось: {time_str}"
                 next_text = f"Світло вимкнеться о {next_change.strftime('%H:%M')}"
+            else:
+                # Currently NO light, next will be TURNED ON  
+                timer_text = f"До ввімкнення залишилось: {time_str}"
+                next_text = f"Світло з'явиться о {next_change.strftime('%H:%M')}"
             
             safe_widget_update(timer_display, timer_text)
             safe_widget_update(next_change_info, next_text)
@@ -258,8 +259,9 @@ class UIManager:
             if len(parts) == 2:
                 start_str = parts[0].strip()
                 hour = int(start_str.split(':')[0])
-                target_time = now.replace(minute=0, second=0, microsecond=0, hour=hour)
-                target_min = hour * 60
+                minute = int(start_str.split(':')[1]) if ':' in start_str and len(start_str.split(':')) > 1 else 0
+                target_time = now.replace(minute=minute, second=0, microsecond=0, hour=hour)
+                target_min = hour * 60 + minute
                 
                 diff = target_min - now_time
                 
