@@ -87,13 +87,3 @@ pip uninstall svitlo-cli
 **Currently using test data!**
 
 The official website https://poweron.loe.lviv.ua has no public API and content is generated via JavaScript, so it's impossible to get real data with simple HTTP requests.
-
-## 🎨 Color Scheme
-
-- 🟠 Orange (#FF7C09) - Light is on
-- ⬛ Dark (#0d0d0d) - Light is off
-- ⬜ Black border (#000) - Current hour
-- ⬛ Black background (#000000) - Console design
-- ⬜ White (#fff) - Main text
-- ⬛ Dark gray (#666) - Text when no light
-
