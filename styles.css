@@ -60,13 +60,13 @@ Screen {
 
 .hour-block.light-on {
     background: #1a1a1a;
-    color: #fff; /* White color for [□] when light is on */
+    color: #D96800; /* Orange color for [■] when light is on */
     border: solid #2a2a2a;
 }
 
 .hour-block.light-off {
     background: #1a1a1a;
-    color: #666; /* Gray color for [■] when light is off */
+    color: #666; /* Gray color for [□] when light is off */
     border: solid #2a2a2a;
 }
 
