@@ -21,27 +21,49 @@ class ScheduleFetcher:
     @handle_async_errors
     async def fetch_group_schedule(self, group: str) -> Dict:
         """Fetch power outage schedule for a specific group"""
+        html_content = ""
+        
         try:
             from bs4 import BeautifulSoup
             from playwright.async_api import async_playwright
 
-            async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True)
-                page = await browser.new_page()
-                await page.goto(self.BASE_URL, wait_until='networkidle', timeout=30000)
-                html_content = await page.content()
-                await browser.close()
+            browser = None
+            page = None
+            
+            try:
+                async with async_playwright() as p:
+                    browser = await p.chromium.launch(headless=True)
+                    context = await browser.new_context()
+                    page = await context.new_page()
+                    
+                    try:
+                        await page.goto(self.BASE_URL, wait_until='domcontentloaded', timeout=30000)
+                        # Wait a bit for JavaScript to execute
+                        await page.wait_for_timeout(2000)
+                        html_content = await page.content()
+                    except Exception as e:
+                        self.logger.error(f"Page load error: {e}")
+                        raise
+                    finally:
+                        if page:
+                            await page.close()
+                        if browser:
+                            await browser.close()
+                
+                schedule_data = self._parse_main_page(html_content, group)
+                self.logger.info(f"Successfully fetched schedule for group {group}")
 
-            schedule_data = self._parse_main_page(html_content, group)
-            self.logger.info(f"Successfully fetched schedule for group {group}")
-
-            return {
-                'success': True,
-                'group': group,
-                'data': schedule_data,
-                'updated': datetime.now().isoformat()
-            }
-
+                return {
+                    'success': True,
+                    'group': group,
+                    'data': schedule_data,
+                    'updated': datetime.now().isoformat()
+                }
+                
+            except Exception as e:
+                self.logger.error(f"Playwright error: {e}")
+                raise
+                
         except Exception as e:
             self.logger.error(f"Failed to fetch schedule for group {group}: {e}")
             mock_data = self._get_mock_schedule(group)

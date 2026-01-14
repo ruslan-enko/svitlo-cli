@@ -17,7 +17,7 @@ Screen {
 #timeline-label-4,
 #timeline-label-5,
 #timeline-label-6 {
-    font-weight: bold;
+    text-style: bold;
     color: #D96800;
     margin: 0;
     height: auto;
@@ -35,7 +35,7 @@ Screen {
 }
 
 #timeline-label {
-    font-weight: bold;
+    text-style: bold;
     color: #D96800;
     margin: 1 1 1 1;
     height: auto;
@@ -50,7 +50,7 @@ Screen {
 /* ============ NEXT DAY INDICATOR ============ */
 .next-day-indicator {
     color: #D96800;
-    font-weight: bold;
+    text-style: bold;
 }
 
 #timeline-legend {
@@ -59,7 +59,7 @@ Screen {
 }
 
 #timeline-grid {
-    font-weight: bold;
+    text-style: bold;
     color: #666;
     /* Gray color for timeline */
     height: auto;
@@ -87,7 +87,7 @@ Screen {
 }
 
 #timer-display {
-    font-weight: bold;
+    text-style: bold;
     text-align: left;
     height: auto;
     color: #fff;
@@ -95,7 +95,7 @@ Screen {
 }
 
 #next-change-info {
-    font-weight: bold;
+    text-style: bold;
     text-align: left;
     color: #888;
     height: auto;
@@ -103,7 +103,7 @@ Screen {
 }
 
 #notification-display {
-    font-weight: bold;
+    text-style: bold;
     text-align: left;
     height: auto;
     color: #D96800;
@@ -111,7 +111,7 @@ Screen {
 }
 
 Label {
-    font-weight: bold;
+    text-style: bold;
     color: #D96800;
     padding: 0;
     margin: 0 0 1 0;
@@ -132,7 +132,7 @@ Select>.select--display {
     background: #1a1a1a;
     color: #fff;
     padding: 0 1 0 1;
-    font-weight: bold;
+    text-style: bold;
 }
 
 Select>.select--display:hover {
@@ -168,7 +168,7 @@ Select>.select--list .select--option-highlight {
 Select>.select--list .select--option--is-selected {
     background: #D96800;
     color: #1a1a1a;
-    font-weight: bold;
+    text-style: bold;
 }
 
 /* ============ ACTIONS ============ */
@@ -190,13 +190,13 @@ Select>.select--list .select--option--is-selected {
 
 #current-group-display {
     color: #D96800;
-    font-weight: bold;
+    text-style: bold;
     margin-top: 0;
 }
 
 #loading-indicator {
     color: #D96800;
-    font-weight: bold;
+    text-style: bold;
     height: auto;
 }
 
@@ -204,7 +204,7 @@ Select>.select--list .select--option--is-selected {
 .status-indicator-on {
     color: #D96800;
     /* Orange color for active status */
-    font-weight: bold;
+    text-style: bold;
 }
 
 .status-indicator-off {

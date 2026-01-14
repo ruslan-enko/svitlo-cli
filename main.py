@@ -1,3 +1,10 @@
+import warnings
+try:
+    from urllib3.exceptions import NotOpenSSLWarning
+    warnings.filterwarnings('ignore', category=NotOpenSSLWarning)
+except ImportError:
+    pass
+
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, Container
 from textual.widgets import Static, Label, Button, Select
