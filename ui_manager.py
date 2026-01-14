@@ -126,10 +126,38 @@ class UIManager:
             total_seconds = max(0, int(delta.total_seconds()))
             time_str = format_time_duration(total_seconds)
             
-            if next_status == 'off':  # Next is 'off' = light will be available
+            # next_status is the status of the NEXT time slot
+            # If current is 'off' and next is 'on' = LIGHT WILL TURN ON
+            # If current is 'on' and next is 'off' = LIGHT WILL TURN OFF
+            
+            # We need to determine what the CHANGE represents
+            current_time_index = now.hour * 2 + (0 if now.minute < 30 else 1)
+            current_status = None
+            
+            # Find current status
+            for item in schedule:
+                time_range = item['time_range']
+                parts = time_range.split(' - ')
+                if len(parts) == 2:
+                    start_str = parts[0].strip()
+                    hour = int(start_str.split(':')[0])
+                    minute = 0  # Always use hour start
+                    target_min = hour * 2
+                    if target_min == current_time_index:
+                        current_status = item['status']
+                        break
+            
+            # Determine the change
+            if current_status == 'off' and next_status == 'on':
+                timer_text = f"Наступне ВИМКНЕННЯ через: {time_str}"
+                next_text = NOTIFICATIONS['next_off'].format(next_change.strftime('%H:%M'))
+            elif current_status == 'on' and next_status == 'off':
+                timer_text = f"Наступне ВИМКНЕННЯ через: {time_str}"
+                next_text = NOTIFICATIONS['next_off'].format(next_change.strftime('%H:%M'))
+            elif current_status == 'off' and next_status == 'off':
                 timer_text = f"Наступне ВВІМКНЕННЯ через: {time_str}"
                 next_text = NOTIFICATIONS['next_on'].format(next_change.strftime('%H:%M'))
-            else:  # Next is 'on' = light will be turned off
+            else:  # current on, next on
                 timer_text = f"Наступне ВИМКНЕННЯ через: {time_str}"
                 next_text = NOTIFICATIONS['next_off'].format(next_change.strftime('%H:%M'))
             
