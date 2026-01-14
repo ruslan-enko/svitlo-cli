@@ -147,12 +147,12 @@ class UIManager:
             
             if current_has_light:
                 # Currently HAVE light, next will be TURNED OFF
-                timer_text = f"До вимкнення залишилось: {time_str}"
-                next_text = f"Світло вимкнеться о {next_change.strftime('%H:%M')}"
-            else:
-                # Currently NO light, next will be TURNED ON  
                 timer_text = f"До ввімкнення залишилось: {time_str}"
                 next_text = f"Світло з'явиться о {next_change.strftime('%H:%M')}"
+            else:
+                # Currently NO light, next will be TURNED ON  
+                timer_text = f"До вимкнення залишилось: {time_str}"
+                next_text = f"Світло вимкнеться о {next_change.strftime('%H:%M')}"
             
             safe_widget_update(timer_display, timer_text)
             safe_widget_update(next_change_info, next_text)
