@@ -55,7 +55,7 @@ class SvitloApp(App):
 ╚══════╝  ╚═══╝  ╚═╝   ╚═╝   ╚══════╝ ╚═════╝      ╚═════╝╚══════╝╚═╝
 """, id="timeline-label")
                 yield Static("", id="timeline-date")
-                yield Static("█ є  |  □ немає  |  █ зараз", id="timeline-legend")
+                yield Static("■ є  |  □ немає  |  * зараз", id="timeline-legend")
                 yield Static("", id="timeline-grid")
                 yield Static("", id="timeline-summary")
 
