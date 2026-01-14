@@ -1,0 +1,220 @@
+/* ============ BASE STYLES ============ */
+Screen {
+    background: #1a1a1a;
+}
+
+#main-container {
+    layout: vertical;
+    padding: 1;
+    height: 100%;
+    width: 100%;
+}
+
+/* ============ TIMELINE ============ */
+#timeline-container {
+    background: #1a1a1a;
+    padding: 1;
+    height: auto;
+    min-height: 6;
+    border: solid #2a2a2a;
+    width: 100%;
+}
+
+#timeline-label {
+    text-style: bold;
+    color: #D96800;
+    margin: 0 0 0 0;
+    height: 1;
+}
+
+#timeline-date {
+    color: #888;
+    margin-bottom: 0;
+    height: auto;
+}
+
+#timeline-legend {
+    color: #666;
+    margin-bottom: 0;
+}
+
+#timeline-grid {
+    layout: horizontal;
+    height: auto;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.hour-block {
+    background: #1a1a1a;
+    width: 2;
+    min-width: 2;
+    height: 2;
+    content-align: center middle;
+    text-style: bold;
+    color: #555;
+    border: solid #222;
+    box-sizing: border-box;
+}
+
+.hour-block.light-on {
+    background: #00a853;
+    color: #1a1a1a;
+    border: solid #00a853;
+}
+
+.hour-block.light-off {
+    background: #333333;
+    color: #444;
+    border: solid #444;
+}
+
+.hour-block.current {
+    background: #fff;
+    color: #1a1a1a;
+    border: double #D96800;
+}
+
+#timeline-summary {
+    color: #666;
+    margin-top: 0;
+}
+
+/* ============ CONTROLS ============ */
+#controls-container {
+    layout: vertical;
+    padding: 1;
+    height: auto;
+    border: solid #2a2a2a;
+    margin-top: 1;
+    width: 100%;
+}
+
+#timer-display {
+    text-style: bold;
+    text-align: left;
+    height: auto;
+    color: #fff;
+    margin: 0;
+}
+
+#next-change-info {
+    text-style: bold;
+    text-align: left;
+    color: #888;
+    height: auto;
+    margin: 0;
+}
+
+#notification-display {
+    text-style: bold;
+    text-align: left;
+    height: auto;
+    color: #D96800;
+    margin: 0;
+}
+
+Label {
+    text-style: bold;
+    color: #D96800;
+    padding: 0;
+    margin: 0 0 1 0;
+    height: auto;
+}
+
+/* ============ SELECT ============ */
+Select {
+    background: #1a1a1a;
+    border: solid #2a2a2a;
+    color: #fff;
+    height: auto;
+    margin: 0 0 1 0;
+    padding: 0 1 0 1;
+}
+
+Select > .select--display {
+    background: #1a1a1a;
+    color: #fff;
+    padding: 0 1 0 1;
+    text-style: bold;
+}
+
+Select > .select--display:hover {
+    background: #222;
+    border: solid #D96800;
+}
+
+Select > .select--display:focus {
+    border: solid #D96800;
+}
+
+Select > .select--list {
+    background: #1a1a1a;
+    border: solid #2a2a2a;
+    max-height: 12;
+}
+
+Select > .select--list .select--option {
+    background: #1a1a1a;
+    color: #fff;
+    padding: 0 1 0 1;
+}
+
+Select > .select--list .select--option:hover {
+    background: #222;
+}
+
+Select > .select--list .select--option-highlight {
+    background: #D96800;
+    color: #1a1a1a;
+}
+
+Select > .select--list .select--option--is-selected {
+    background: #D96800;
+    color: #1a1a1a;
+    text-style: bold;
+}
+
+/* ============ ACTIONS ============ */
+#actions-container {
+    layout: horizontal;
+    padding: 0;
+    height: auto;
+    margin-top: 1;
+    width: 100%;
+}
+
+#actions-container > Button {
+    background: #1a1a1a;
+    color: #888;
+    border: solid #2a2a2a;
+    width: auto;
+    min-width: 20;
+}
+
+#current-group-display {
+    color: #D96800;
+    text-style: bold;
+    margin-top: 0;
+}
+
+#loading-indicator {
+    color: #D96800;
+    text-style: bold;
+    height: auto;
+}
+
+/* ============ INFO ============ */
+#info-container {
+    background: transparent;
+    padding: 0;
+    height: auto;
+    margin-top: 1;
+}
+
+Static {
+    color: #666;
+    padding: 0;
+    margin: 0;
+}
