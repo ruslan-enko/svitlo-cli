@@ -81,20 +81,20 @@ class UIManager:
             
             status = schedule.get(time_str, 'on')
             
-            if status == 'on':
-                on_count += 1
-                # Current hour - orange, others - white
+            if status == 'off':  # Light is OFF
+                off_count += 1
+                # Current hour - orange, others - white (for [■] when light is ON)
                 if hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30)):
                     timeline_symbols.append(f"[#D96800][■][/#D96800]")
                 else:
-                    timeline_symbols.append("[#fff][■][/#fff]")
-            else:
-                off_count += 1
-                # Current hour - orange, others - gray
+                    timeline_symbols.append("[#D96800][■][/#D96800]")  # Orange for [■] = light ON
+            else:  # Light is ON
+                on_count += 1
+                # Current hour - orange, others - gray (for [□] when light is OFF)
                 if hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30)):
                     timeline_symbols.append(f"[#D96800][□][/#D96800]")
                 else:
-                    timeline_symbols.append("[#666][□][/#666]")
+                    timeline_symbols.append("[#fff][□][/#fff]")  # White for [□] = light OFF
         
         # Update timeline as single string
         timeline_widget = safe_query("timeline-grid", Static, self.app)
