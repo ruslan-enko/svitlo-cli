@@ -25,7 +25,7 @@ setup(
     description="Terminal TUI app for monitoring power outage schedules in Lviv",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/enko/svitlo-cli",
+    url="https://github.com/ruslan-enko/svitlo-cli",
     py_modules=["main", "schedule_fetcher", "ui_manager", "config", "utils"],
     classifiers=[
         "Development Status :: 4 - Beta",
