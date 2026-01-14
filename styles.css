@@ -46,7 +46,6 @@ Screen {
     overflow-x: auto;
     overflow-y: auto;
     margin: 1 0;
-    padding: 1; /* Add padding to make symbols appear larger */
 }
 
 
