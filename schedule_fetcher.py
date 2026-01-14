@@ -1,6 +1,6 @@
 import requests
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 import re
 import logging
 
@@ -60,6 +60,9 @@ class ScheduleFetcher:
 
         text_div = soup.select_one('.power-off__text')
         full_text = text_div.get_text() if text_div else soup.get_text()
+        
+        # Get full page text for next day parsing (second schedule is in different div)
+        full_page_text = soup.get_text()
 
         schedule_date = self._extract_schedule_date(full_text)
         update_time = self._extract_update_time(full_text)
@@ -72,15 +75,48 @@ class ScheduleFetcher:
             off_ranges = self._parse_time_ranges(time_ranges)
             schedule = self._build_schedule_from_ranges(off_ranges)
             current_status = self._get_current_status(off_ranges)
-
-            return {
+            
+            # Try to extract next day schedule using full page text
+            next_day_data = self._extract_next_day_schedule(full_page_text, target_group)
+            
+            # Calculate next event time
+            from datetime import datetime
+            now = datetime.now()
+            now_minutes = now.hour * 60 + now.minute
+            
+            next_event_text = 'Немає запланованих змін'
+            for off_range in off_ranges:
+                start_min = off_range['start'][0] * 60 + off_range['start'][1]
+                end_min = off_range['end'][0] * 60 + off_range['end'][1]
+                
+                if start_min > now_minutes:
+                    # Next outage will start
+                    next_event_text = f"Наступне відключення о {off_range['start'][0]:02d}:{off_range['start'][1]:02d}"
+                    break
+                elif start_min <= now_minutes < end_min:
+                    # Currently in outage, next event is when light comes back
+                    next_event_text = f"Світло з'явиться о {off_range['end'][0]:02d}:{off_range['end'][1]:02d}"
+                    break
+            
+            result = {
                 'schedule': schedule,
                 'current_status': current_status,
-                'next_event': 'Немає запланованих змін',
+                'next_event': next_event_text,
                 'is_mock': False,
                 'schedule_date': schedule_date,
                 'update_time': update_time
             }
+            
+            # Add next day schedule if available
+            if next_day_data:
+                result['next_day_schedule'] = next_day_data['schedule']
+                result['next_day_date'] = next_day_data['schedule_date']
+                result['next_day_event'] = next_day_data.get('next_event', '')
+                result['has_next_day'] = True
+            else:
+                result['has_next_day'] = False
+
+            return result
 
         mock_data = self._get_mock_schedule(target_group)
         mock_data['is_mock'] = True
@@ -101,12 +137,86 @@ class ScheduleFetcher:
             return f"{day} {month_name} {year} року"
         return ""
     
+    def _extract_next_day_date(self, text: str) -> str:
+        """Extract next day schedule date from text content (if available)"""
+        # Look for the second date pattern after the first schedule
+        # Pattern: "Графік погодинних відключень на DD.MM.YYYY" appears again
+        pattern = r'Графік\s+погодинних\s+відключень\s+на\s+(\d{2}\.\d{2}\.\d{4})'
+        matches = re.findall(pattern, text)
+        
+        if len(matches) >= 2:
+            # Second date is the next day schedule
+            date_str = matches[1]
+            day, month, year = date_str.split('.')
+            months_ua = [
+                'січень', 'лютий', 'березень', 'квітень', 'травень', 'червень',
+                'липень', 'серпень', 'вересень', 'жовтень', 'листопад', 'грудень'
+            ]
+            month_name = months_ua[int(month) - 1]
+            return f"{day} {month_name} {year} року"
+        return ""
+    
     def _extract_update_time(self, text: str) -> str:
         """Extract last update time from text content"""
         match = re.search(r'Інформація\s+станом\s+на\s+(\d{2}:\d{2}\s+\d{2}\.\d{2}\.\d{4})', text)
         if match:
             return match.group(1)
         return ""
+    
+    def _extract_next_day_schedule(self, text: str, target_group: str, current_off_ranges: Optional[List[Dict]] = None) -> Optional[Dict]:
+        """Extract next day schedule for target group if available"""
+        # Find the position of the second date header (next day)
+        # Looking for "Графік погодинних відключень на DD.MM.YYYY" where DD != first date
+        import re
+        
+        # First, find all date headers with their positions
+        date_pattern = r'Графік\s+погодинних\s+відключень\s+на\s+(\d{2}\.\d{2}\.\d{4})'
+        matches = list(re.finditer(date_pattern, text))
+        
+        if len(matches) < 2:
+            return None
+        
+        # Get the second date header position
+        second_date_match = matches[1]
+        next_day_date_str = second_date_match.group(1)
+        
+        # Convert to Ukrainian format
+        day, month, year = next_day_date_str.split('.')
+        months_ua = [
+            'січень', 'лютий', 'березень', 'квітень', 'травень', 'червень',
+            'липень', 'серпень', 'вересень', 'жовтень', 'листопад', 'грудень'
+        ]
+        month_name = months_ua[int(month) - 1]
+        next_day_date = f"{day} {month_name} {year} року"
+        
+        # Get text from second date header onwards
+        second_date_start = second_date_match.start()
+        next_day_text = text[second_date_start:]
+        
+        # Find the target group in the next day text
+        pattern = rf'Група\s+{re.escape(target_group)}\.\s*Електроенергії\s*немає\s*з\s*([^\.]+)\.'
+        match = re.search(pattern, next_day_text)
+        
+        if match:
+            time_ranges = match.group(1).strip()
+            off_ranges = self._parse_time_ranges(time_ranges)
+            schedule = self._build_schedule_from_ranges(off_ranges)
+            
+            # For next day, first event is always the first outage
+            if off_ranges:
+                first_out = off_ranges[0]
+                next_event_text = f"Перше відключення о {first_out['start'][0]:02d}:{first_out['start'][1]:02d}"
+            else:
+                next_event_text = 'Немає запланованих змін'
+            
+            return {
+                'schedule': schedule,
+                'schedule_date': next_day_date,
+                'has_next_day': True,
+                'next_event': next_event_text
+            }
+        
+        return None
 
     def _parse_time_ranges(self, text: str) -> List[Dict]:
         """Parse time ranges from text and return list of start/end times"""

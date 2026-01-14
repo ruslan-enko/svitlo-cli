@@ -63,6 +63,6 @@ UI_SETTINGS = {
         'success': '#00a853',
         'error': '#ff4444',
         'warning': '#ff9800',
-        'info': '#2196f3'
+        'info': '#D96800'
     }
 }

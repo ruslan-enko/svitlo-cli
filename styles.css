@@ -47,6 +47,12 @@ Screen {
     height: auto;
 }
 
+/* ============ NEXT DAY INDICATOR ============ */
+.next-day-indicator {
+    color: #D96800;
+    text-style: bold;
+}
+
 #timeline-legend {
     color: #666;
     margin-bottom: 0;

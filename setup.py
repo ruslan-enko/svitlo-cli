@@ -8,10 +8,14 @@ def read_readme():
     with open("README.md", "r", encoding="utf-8") as fh:
         return fh.read()
 
-# Read requirements
-def read_requirements():
-    with open("requirements.txt", "r", encoding="utf-8") as fh:
-        return [line.strip() for line in fh if line.strip() and not line.startswith("#")]
+# Dependencies
+DEPENDENCIES = [
+    "textual>=0.47.0",
+    "requests>=2.31.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
+    "playwright>=1.48.0",
+]
 
 setup(
     name="svitlo-cli",
@@ -39,7 +43,7 @@ setup(
         "Topic :: Utilities",
     ],
     python_requires=">=3.8",
-    install_requires=read_requirements(),
+    install_requires=DEPENDENCIES,
     entry_points={
         "console_scripts": [
             "svitlo-cli=main:main",

@@ -29,6 +29,7 @@ class SvitloApp(App):
     TITLE = f"{APP_NAME} v{APP_VERSION}"
     BINDINGS = [
         ("r", "refresh", "Оновити"),
+        ("t", "toggle_day", "Завтра/Сьогодні"),
         ("q", "quit", "Вихід"),
     ]
 
@@ -39,6 +40,7 @@ class SvitloApp(App):
         self.ui_manager = UIManager(self)
         self.current_group = DEFAULT_GROUP
         self.schedule_data = None
+        self.updated = ""
         self.last_notification_time = None
         self.logger = logging.getLogger(__name__)
 
@@ -118,7 +120,8 @@ class SvitloApp(App):
 
             if result['success']:
                 self.schedule_data = result['data']
-                self.update_ui(result['data'], result['updated'])
+                self.updated = result.get('updated', '')
+                self.update_ui(result['data'], self.updated)
             else:
                 self.ui_manager.show_error(result.get('error', 'Unknown error'))
         finally:
@@ -165,6 +168,14 @@ class SvitloApp(App):
     def action_refresh(self) -> None:
         """Refresh schedule data"""
         self.run_worker(self.load_schedule())
+    
+    def action_toggle_day(self) -> None:
+        """Toggle between today and next day schedule"""
+        if self.schedule_data:
+            showing_next = self.ui_manager.toggle_day()
+            day_text = "завтра" if showing_next else "сьогодні"
+            self.notify(f"Показано розклад на {day_text}", severity="information")
+            self.update_ui(self.schedule_data, self.updated)
 
 
 def main():

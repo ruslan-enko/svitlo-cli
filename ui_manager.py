@@ -17,6 +17,7 @@ class UIManager:
         """Initialize UI manager with app reference"""
         self.app = app
         self.logger = logging.getLogger(__name__)
+        self.showing_next_day = False  # Toggle between today/next day
     
     def show_loading(self, is_loading: bool) -> None:
         """Show/hide loading indicators and update UI accordingly"""
@@ -55,12 +56,17 @@ class UIManager:
     
     def update_date_display(self, data: Dict[str, Any]) -> None:
         """Update schedule date display"""
-        schedule_date = data.get('schedule_date', '')
-        update_time = data.get('update_time', '')
+        display_data = self.get_schedule_for_display(data)
+        schedule_date = display_data.get('schedule_date', '')
+        
         if schedule_date:
             date_widget = safe_query("timeline-date", Static, self.app)
-            if update_time:
-                safe_widget_update(date_widget, f"Дата: {schedule_date} | Оновлено: {update_time}")
+            
+            # Add next day indicator if available
+            next_day_indicator = self.get_next_day_indicator(data)
+            
+            if next_day_indicator:
+                safe_widget_update(date_widget, f"Дата: {schedule_date} | {next_day_indicator}")
             else:
                 safe_widget_update(date_widget, f"Дата: {schedule_date}")
     
@@ -69,10 +75,51 @@ class UIManager:
         group_display = safe_query("current-group-display", Static, self.app)
         safe_widget_update(group_display, f"Поточна група: {group}")
     
+    def toggle_day(self) -> bool:
+        """Toggle between today and next day schedule"""
+        self.showing_next_day = not self.showing_next_day
+        return self.showing_next_day
+    
+    def is_showing_next_day(self) -> bool:
+        """Check if currently showing next day schedule"""
+        return self.showing_next_day
+    
+    def get_schedule_for_display(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Get the appropriate schedule based on current day toggle"""
+        if self.showing_next_day and data.get('has_next_day'):
+            return {
+                'schedule': data.get('next_day_schedule', []),
+                'schedule_date': data.get('next_day_date', ''),
+                'is_next_day': True,
+                'has_next_day': data.get('has_next_day', False)
+            }
+        else:
+            return {
+                'schedule': data.get('schedule', []),
+                'schedule_date': data.get('schedule_date', ''),
+                'is_next_day': False,
+                'has_next_day': data.get('has_next_day', False)
+            }
+    
+    def get_next_day_indicator(self, data: Dict[str, Any]) -> str:
+        """Get indicator text for next day availability"""
+        if data.get('has_next_day'):
+            if self.showing_next_day:
+                return "Завтра (натисніть t для сьогодні)"
+            else:
+                return "Є розклад на завтра (натисніть t)"
+        return ""
+    
     def update_timeline(self, data: Dict[str, Any]) -> None:
         """Update timeline visualization"""
         now = datetime.now()
-        schedule = {item['time_range']: item['status'] for item in data.get('schedule', [])}
+        
+        # Use the appropriate schedule based on day toggle
+        display_data = self.get_schedule_for_display(data)
+        schedule = {item['time_range']: item['status'] for item in display_data.get('schedule', [])}
+        
+        # Don't show current time marker when viewing next day
+        is_next_day = display_data.get('is_next_day', False)
         
         on_count = 0
         off_count = 0
@@ -85,17 +132,18 @@ class UIManager:
             
             status = schedule.get(time_str, 'on')
             
+            # Check if this is the current time slot (only for today)
+            is_current_time = not is_next_day and hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30))
+            
             if status == 'off':  # Light is OFF
                 off_count += 1
-                # Current time - orange *, others - gray □
-                if hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30)):
+                if is_current_time:
                     timeline_symbols.append(f"[#D96800]*[/#D96800]")  # Orange current time
                 else:
                     timeline_symbols.append("[#666]□[/#666]")  # Gray no light
             else:  # Light is ON
                 on_count += 1
-                # Current time - orange *, others - white ■
-                if hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30)):
+                if is_current_time:
                     timeline_symbols.append(f"[#D96800]*[/#D96800]")  # Orange current time
                 else:
                     timeline_symbols.append("[#fff]■[/#fff]")  # White has light
@@ -113,13 +161,55 @@ class UIManager:
         if not schedule_data:
             return
         
+        # Get the appropriate schedule based on day toggle
+        display_data = self.get_schedule_for_display(schedule_data)
+        schedule = display_data.get('schedule', [])
+        is_next_day = display_data.get('is_next_day', False)
+        
         now = datetime.now()
-        schedule = schedule_data.get('schedule', [])
-        
-        next_change, next_status = self._find_next_change(schedule, now)
-        
         timer_display = safe_query("timer-display", Static, self.app)
         next_change_info = safe_query("next-change-info", Static, self.app)
+        
+        if is_next_day:
+            # For next day, show the first event of the day (not countdown from now)
+            # Find first 'off' and first 'on' status in the schedule
+            first_off = None
+            first_on = None
+            prev_status = None
+            found_off = False
+            
+            for item in schedule:
+                time_range = item['time_range']
+                status = item['status']
+                start_time = time_range.split(' - ')[0]
+                
+                # First outage - when status changes from 'on' to 'off'
+                if status == 'off' and prev_status == 'on':
+                    first_off = start_time
+                    first_on = None  # Reset first_on to find it after this outage
+                
+                # First light after the first outage
+                if first_off and status == 'off':
+                    found_off = True
+                elif first_off and status == 'on' and found_off and first_on is None:
+                    first_on = start_time
+                    break  # Stop after finding first light after first outage
+                
+                prev_status = status
+            
+            if first_off and first_on:
+                # Show info about tomorrow's schedule
+                timer_text = f"Завтра перше відключення о {first_off}"
+                next_text = f"Світло з'явиться о {first_on}"
+                safe_widget_update(timer_display, timer_text)
+                safe_widget_update(next_change_info, next_text)
+            else:
+                safe_widget_update(timer_display, STATUS_TEXTS['no_more_changes'])
+                safe_widget_update(next_change_info, "")
+            return
+        
+        # Original logic for today
+        next_change, next_status = self._find_next_change(schedule, now)
         
         if next_change and next_status:
             delta = next_change - now
