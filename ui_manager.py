@@ -122,10 +122,10 @@ class UIManager:
             total_seconds = max(0, int(delta.total_seconds()))
             time_str = format_time_duration(total_seconds)
             
-            if next_status == 'on':
+            if next_status == 'off':  # Next is 'off' = light will be available
                 timer_text = f"Наступне ВВІМКНЕННЯ через: {time_str}"
                 next_text = NOTIFICATIONS['next_on'].format(next_change.strftime('%H:%M'))
-            else:
+            else:  # Next is 'on' = light will be turned off
                 timer_text = f"Наступне ВИМКНЕННЯ через: {time_str}"
                 next_text = NOTIFICATIONS['next_off'].format(next_change.strftime('%H:%M'))
             
