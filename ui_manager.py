@@ -1,6 +1,6 @@
 """UI management module for Svitlo CLI application"""
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, Any, Optional
 import logging
 
@@ -216,25 +216,29 @@ class UIManager:
             total_seconds = max(0, int(delta.total_seconds()))
             time_str = format_time_duration(total_seconds)
             
-            # Simple logic based on CURRENT light status from schedule data
-            # Get current status from the schedule for current time
-            current_time_index = now.hour * 2 + (0 if now.minute < 30 else 1)
-            current_status = 'off'  # default
-            
+            # Determine if current has light by checking if now is within any 'off' range
+            current_has_light = True  # default: assume light is on
             for item in schedule:
                 time_range = item['time_range']
-                parts = time_range.split(' - ')
-                if len(parts) == 2:
-                    start_str = parts[0].strip()
-                    hour = int(start_str.split(':')[0])
-                    target_index = hour * 2
-                    if target_index == current_time_index:
-                        current_status = item['status']
-                        break
-            
-            # Determine if current has light based on schedule status
-            # 'off' in schedule means power outage (NO light), 'on' means has light
-            current_has_light = (current_status == 'on')
+                start_str, end_str = time_range.split(' - ')
+                start_hour, start_min = map(int, start_str.split(':'))
+                end_hour, end_min = map(int, end_str.split(':'))
+                
+                now_min = now.hour * 60 + now.minute
+                start_min_total = start_hour * 60 + start_min
+                end_min_total = end_hour * 60 + end_min
+                
+                in_range = False
+                if start_min_total < end_min_total:
+                    in_range = start_min_total <= now_min < end_min_total
+                elif start_min_total == end_min_total:
+                    in_range = start_min_total <= now_min < start_min_total + 30
+                else:
+                    in_range = now_min >= start_min_total or now_min < end_min_total
+                
+                if in_range:
+                    current_has_light = (item['status'] == 'on')
+                    break
             
             if current_has_light:
                 # Currently HAVE light, next will be TURNED OFF
@@ -329,11 +333,6 @@ class UIManager:
         
         summary = f"■ є: {on_text}  |  □ немає: {off_text}  |  * зараз"
         safe_widget_update(summary_widget, summary)
-        
-        # Add color styling to the summary
-        if summary_widget:
-            summary_widget.remove_class("status-indicator-off")
-            summary_widget.add_class("status-indicator-on")
     
     def _find_next_change(self, schedule: list, now: datetime) -> tuple:
         """Find next schedule change"""

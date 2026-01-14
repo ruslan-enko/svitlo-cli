@@ -9,7 +9,6 @@ from textual.app import App, ComposeResult
 from textual.containers import Vertical, Container
 from textual.widgets import Static, Label, Button, Select
 from datetime import datetime
-from threading import Timer
 import logging
 
 from schedule_fetcher import ScheduleFetcher
@@ -91,7 +90,6 @@ class SvitloApp(App):
                     value=DEFAULT_GROUP,
                     id="group-select"
                 )
-                yield Static(f"Поточна група: {DEFAULT_GROUP}", id="current-group-display")
                 yield Static("", id="loading-indicator")
 
             with Container(id="actions-container"):
@@ -110,7 +108,6 @@ class SvitloApp(App):
     @handle_ui_errors
     async def on_mount(self) -> None:
         """Initialize app after mounting"""
-        self.ui_manager.update_group_display(self.current_group)
         await self.load_schedule()
 
     async def load_schedule(self):
@@ -169,7 +166,6 @@ class SvitloApp(App):
         """Handle group selection change"""
         if event.value:
             self.current_group = str(event.value)
-            self.ui_manager.update_group_display(self.current_group)
             self.run_worker(self.load_schedule())
 
     def action_refresh(self) -> None:

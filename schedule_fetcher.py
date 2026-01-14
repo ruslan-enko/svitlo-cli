@@ -1,4 +1,3 @@
-import requests
 from datetime import datetime
 from typing import Dict, List, Optional
 import re
@@ -152,30 +151,11 @@ class ScheduleFetcher:
             date_str = match.group(1)
             day, month, year = date_str.split('.')
             months_ua = [
-                'січень', 'лютий', 'березень', 'квітень', 'травень', 'червень',
-                'липень', 'серпень', 'вересень', 'жовтень', 'листопад', 'грудень'
+                'Січня', 'Лютого', 'Березня', 'Квітня', 'Травня', 'Червня',
+                'Липня', 'Серпня', 'Вересня', 'Жовтня', 'Листопада', 'Грудня'
             ]
             month_name = months_ua[int(month) - 1]
-            return f"{day} {month_name} {year} року"
-        return ""
-    
-    def _extract_next_day_date(self, text: str) -> str:
-        """Extract next day schedule date from text content (if available)"""
-        # Look for the second date pattern after the first schedule
-        # Pattern: "Графік погодинних відключень на DD.MM.YYYY" appears again
-        pattern = r'Графік\s+погодинних\s+відключень\s+на\s+(\d{2}\.\d{2}\.\d{4})'
-        matches = re.findall(pattern, text)
-        
-        if len(matches) >= 2:
-            # Second date is the next day schedule
-            date_str = matches[1]
-            day, month, year = date_str.split('.')
-            months_ua = [
-                'січень', 'лютий', 'березень', 'квітень', 'травень', 'червень',
-                'липень', 'серпень', 'вересень', 'жовтень', 'листопад', 'грудень'
-            ]
-            month_name = months_ua[int(month) - 1]
-            return f"{day} {month_name} {year} року"
+            return f"{day} {month_name} {year}"
         return ""
     
     def _extract_update_time(self, text: str) -> str:
@@ -189,7 +169,6 @@ class ScheduleFetcher:
         """Extract next day schedule for target group if available"""
         # Find the position of the second date header (next day)
         # Looking for "Графік погодинних відключень на DD.MM.YYYY" where DD != first date
-        import re
         
         # First, find all date headers with their positions
         date_pattern = r'Графік\s+погодинних\s+відключень\s+на\s+(\d{2}\.\d{2}\.\d{4})'
@@ -205,11 +184,11 @@ class ScheduleFetcher:
         # Convert to Ukrainian format
         day, month, year = next_day_date_str.split('.')
         months_ua = [
-            'січень', 'лютий', 'березень', 'квітень', 'травень', 'червень',
-            'липень', 'серпень', 'вересень', 'жовтень', 'листопад', 'грудень'
+            'Січня', 'Лютого', 'Березня', 'Квітня', 'Травня', 'Червня',
+            'Липня', 'Серпня', 'Вересня', 'Жовтня', 'Листопада', 'Грудня'
         ]
         month_name = months_ua[int(month) - 1]
-        next_day_date = f"{day} {month_name} {year} року"
+        next_day_date = f"{day} {month_name} {year}"
         
         # Get text from second date header onwards
         second_date_start = second_date_match.start()

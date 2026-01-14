@@ -20,7 +20,7 @@ COLORS = {
 
 # UI settings
 UPDATE_INTERVAL = 1  # seconds (timer only)
-DATA_REFRESH_INTERVAL = 60  # seconds (schedule data auto-refresh)
+DATA_REFRESH_INTERVAL = 600  # seconds (10 minutes)
 NOTIFICATION_DURATION = 10  # seconds
 NOTIFICATION_THRESHOLD = 30  # minutes before status change
 
