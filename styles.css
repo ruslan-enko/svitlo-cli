@@ -42,7 +42,7 @@ Screen {
     text-style: bold;
     color: #666; /* Gray color for timeline */
     height: auto;
-    width: 1400px; /* Larger container for bigger symbols */
+    width: 3; /* Larger container for bigger symbols */
     overflow-x: auto;
     overflow-y: auto;
     margin: 1 0;
