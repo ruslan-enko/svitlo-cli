@@ -205,6 +205,16 @@ Select > .select--list .select--option--is-selected {
     height: auto;
 }
 
+/* ============ STATUS INDICATORS ============ */
+.status-indicator-on {
+    color: #D96800; /* Orange color for active status */
+    text-style: bold;
+}
+
+.status-indicator-off {
+    color: #666; /* Gray color for inactive status */
+}
+
 /* ============ INFO ============ */
 #info-container {
     background: transparent;

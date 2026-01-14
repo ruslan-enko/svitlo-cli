@@ -44,8 +44,14 @@ class UIManager:
         
         if self._is_light_on(status):
             safe_widget_update(timer_display, f"[■] {status} ({data_source})")
+            if timer_display:
+                timer_display.remove_class("status-indicator-off")
+                timer_display.add_class("status-indicator-on")
         else:
             safe_widget_update(timer_display, f"[□] {status} ({data_source})")
+            if timer_display:
+                timer_display.remove_class("status-indicator-on")
+                timer_display.add_class("status-indicator-off")
     
     def update_date_display(self, data: Dict[str, Any]) -> None:
         """Update schedule date display"""
@@ -218,6 +224,11 @@ class UIManager:
         
         summary = f"[■] є: {on_text}  |  [□] немає: {off_text}"
         safe_widget_update(summary_widget, summary)
+        
+        # Add color styling to the summary
+        if summary_widget:
+            summary_widget.remove_class("status-indicator-off")
+            summary_widget.add_class("status-indicator-on")
     
     def _find_next_change(self, schedule: list, now: datetime) -> tuple:
         """Find next schedule change"""
