@@ -56,9 +56,13 @@ class UIManager:
     def update_date_display(self, data: Dict[str, Any]) -> None:
         """Update schedule date display"""
         schedule_date = data.get('schedule_date', '')
+        update_time = data.get('update_time', '')
         if schedule_date:
             date_widget = safe_query("timeline-date", Static, self.app)
-            safe_widget_update(date_widget, f"Дата: {schedule_date}")
+            if update_time:
+                safe_widget_update(date_widget, f"Дата: {schedule_date} | Оновлено: {update_time}")
+            else:
+                safe_widget_update(date_widget, f"Дата: {schedule_date}")
     
     def update_group_display(self, group: str) -> None:
         """Update current group display"""

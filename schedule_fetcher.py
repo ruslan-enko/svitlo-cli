@@ -62,7 +62,8 @@ class ScheduleFetcher:
         full_text = text_div.get_text() if text_div else soup.get_text()
 
         schedule_date = self._extract_schedule_date(full_text)
-
+        update_time = self._extract_update_time(full_text)
+        
         pattern = rf'Група\s+{re.escape(target_group)}\.\s*Електроенергії\s*немає\s*з\s*([^\.]+)\.'
         match = re.search(pattern, full_text)
 
@@ -77,7 +78,8 @@ class ScheduleFetcher:
                 'current_status': current_status,
                 'next_event': 'Немає запланованих змін',
                 'is_mock': False,
-                'schedule_date': schedule_date
+                'schedule_date': schedule_date,
+                'update_time': update_time
             }
 
         mock_data = self._get_mock_schedule(target_group)
@@ -86,7 +88,7 @@ class ScheduleFetcher:
         return mock_data
 
     def _extract_schedule_date(self, text: str) -> str:
-        """Extract schedule date from the text content"""
+        """Extract schedule date from text content"""
         match = re.search(r'Графік\s+погодинних\s+відключень\s+на\s+(\d{2}\.\d{2}\.\d{4})', text)
         if match:
             date_str = match.group(1)
@@ -97,6 +99,13 @@ class ScheduleFetcher:
             ]
             month_name = months_ua[int(month) - 1]
             return f"{day} {month_name} {year} року"
+        return ""
+    
+    def _extract_update_time(self, text: str) -> str:
+        """Extract last update time from text content"""
+        match = re.search(r'Інформація\s+станом\s+на\s+(\d{2}:\d{2}\s+\d{2}\.\d{2}\.\d{4})', text)
+        if match:
+            return match.group(1)
         return ""
 
     def _parse_time_ranges(self, text: str) -> List[Dict]:
