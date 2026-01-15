@@ -200,26 +200,33 @@ class UIManager:
             first_on = None
             prev_status = None
             found_off = False
-            
+
             for item in schedule:
                 time_range = item['time_range']
                 status = item['status']
                 start_time = time_range.split(' - ')[0]
-                
+
+                # Handle case where first item is already 'off' (e.g., 00:00)
+                if prev_status is None and status == 'off':
+                    first_off = start_time
+                    prev_status = status
+                    continue
+
                 # First outage - when status changes from 'on' to 'off'
                 if status == 'off' and prev_status == 'on':
                     first_off = start_time
                     first_on = None  # Reset first_on to find it after this outage
-                
+                    found_off = False
+
                 # First light after the first outage
                 if first_off and status == 'off':
                     found_off = True
                 elif first_off and status == 'on' and found_off and first_on is None:
                     first_on = start_time
                     break  # Stop after finding first light after first outage
-                
+
                 prev_status = status
-            
+
             if first_off and first_on:
                 # Show info about tomorrow's schedule
                 timer_text = f"Завтра перше відключення о {first_off}"

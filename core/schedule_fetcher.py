@@ -109,14 +109,18 @@ class ScheduleFetcher:
             for off_range in off_ranges:
                 start_min = off_range['start'][0] * 60 + off_range['start'][1]
                 end_min = off_range['end'][0] * 60 + off_range['end'][1]
-                
+                if off_range.get('original_end_hour') == 24:
+                    end_min = 1440
+
                 if start_min > now_minutes:
-                    # Next outage will start
                     next_event_text = f"Наступне відключення о {off_range['start'][0]:02d}:{off_range['start'][1]:02d}"
                     break
                 elif start_min <= now_minutes < end_min:
-                    # Currently in outage, next event is when light comes back
-                    next_event_text = f"Світло з'явиться о {off_range['end'][0]:02d}:{off_range['end'][1]:02d}"
+                    if off_range.get('original_end_hour') == 24:
+                        end_hour_display = 24
+                    else:
+                        end_hour_display = off_range['end'][0]
+                    next_event_text = f"Світло з'явиться о {end_hour_display:02d}:{off_range['end'][1]:02d}"
                     break
             
             result = {
@@ -226,11 +230,21 @@ class ScheduleFetcher:
         """Parse time ranges from text and return list of start/end times"""
         ranges = []
         for part in text.split(','):
-            match = re.search(r'(?:з\s+)?(\d{1,2}):(\d{2})\s+до\s+(\d{1,2}):(\d{2})', part.strip())
+            part = part.strip()
+            match = re.search(r'(?:з\s+)?(\d{1,2}):(\d{2})\s+до\s+(\d{1,2}):(\d{2})', part)
             if match:
+                start_hour = int(match.group(1))
+                start_min = int(match.group(2))
+                end_hour = int(match.group(3))
+                end_min = int(match.group(4))
+
+                if end_hour == 24:
+                    end_hour = 0
+
                 ranges.append({
-                    'start': (int(match.group(1)), int(match.group(2))),
-                    'end': (int(match.group(3)), int(match.group(4)))
+                    'start': (start_hour, start_min),
+                    'end': (end_hour, end_min),
+                    'original_end_hour': int(match.group(3))
                 })
         return ranges
 
@@ -243,7 +257,7 @@ class ScheduleFetcher:
             time_point = (hour, minute)
 
             is_off = any(
-                self._is_time_in_range(time_point, r['start'], r['end'])
+                self._is_time_in_range(time_point, r['start'], r['end'], r.get('original_end_hour'))
                 for r in off_ranges
             )
 
@@ -253,11 +267,14 @@ class ScheduleFetcher:
             })
         return schedule
 
-    def _is_time_in_range(self, time: tuple, start: tuple, end: tuple) -> bool:
+    def _is_time_in_range(self, time: tuple, start: tuple, end: tuple, original_end_hour: Optional[int] = None) -> bool:
         """Check if a specific time falls within a range"""
         time_min = time[0] * 60 + time[1]
         start_min = start[0] * 60 + start[1]
         end_min = end[0] * 60 + end[1]
+
+        if original_end_hour == 24:
+            return time_min >= start_min and time_min < 1440
 
         if start_min < end_min:
             return start_min <= time_min < end_min
@@ -271,7 +288,7 @@ class ScheduleFetcher:
         current_time = (now.hour, now.minute)
 
         for off_range in off_ranges:
-            if self._is_time_in_range(current_time, off_range['start'], off_range['end']):
+            if self._is_time_in_range(current_time, off_range['start'], off_range['end'], off_range.get('original_end_hour')):
                 return 'Світла немає'
         return 'Світло є'
 

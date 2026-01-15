@@ -34,7 +34,6 @@ setup(
         "core",
         "layout",
         "ui",
-        "tests",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
