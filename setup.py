@@ -19,7 +19,7 @@ DEPENDENCIES = [
 
 setup(
     name="svitlo-cli",
-    version="0.42",
+    version="0.44",
     author="Enko",
     author_email="",
     description="Terminal TUI app for monitoring power outage schedules in Lviv",

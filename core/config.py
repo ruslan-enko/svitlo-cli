@@ -3,7 +3,7 @@ import os
 
 # Application info
 APP_NAME = "Svitlo CLI"
-APP_VERSION = "1.0.0"
+APP_VERSION = "0.44"
 
 # Preferences file path
 PREFERENCES_FILE = os.path.expanduser("~/.config/svitlo-cli/preferences.json")
