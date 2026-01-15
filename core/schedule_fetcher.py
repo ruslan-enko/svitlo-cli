@@ -4,7 +4,7 @@ import re
 import logging
 
 try:
-    from utils import handle_async_errors
+    from core.utils import handle_async_errors
 except ImportError:
     def handle_async_errors(func):
         return func
@@ -125,7 +125,8 @@ class ScheduleFetcher:
                 'next_event': next_event_text,
                 'is_mock': False,
                 'schedule_date': schedule_date,
-                'update_time': update_time
+                'update_time': update_time,
+                'off_ranges': off_ranges
             }
             
             # Add next day schedule if available
@@ -133,6 +134,7 @@ class ScheduleFetcher:
                 result['next_day_schedule'] = next_day_data['schedule']
                 result['next_day_date'] = next_day_data['schedule_date']
                 result['next_day_event'] = next_day_data.get('next_event', '')
+                result['next_day_off_ranges'] = next_day_data.get('off_ranges', [])
                 result['has_next_day'] = True
             else:
                 result['has_next_day'] = False
@@ -214,7 +216,8 @@ class ScheduleFetcher:
                 'schedule': schedule,
                 'schedule_date': next_day_date,
                 'has_next_day': True,
-                'next_event': next_event_text
+                'next_event': next_event_text,
+                'off_ranges': off_ranges
             }
         
         return None
@@ -297,5 +300,6 @@ class ScheduleFetcher:
         return {
             'schedule': schedule,
             'current_status': current_status,
-            'next_event': 'Немає запланованих змін'
+            'next_event': 'Немає запланованих змін',
+            'off_ranges': off_ranges
         }

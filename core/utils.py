@@ -86,7 +86,11 @@ def format_time_duration(seconds: int) -> str:
 
 def is_light_on(status_text: str) -> bool:
     """Check if status indicates light is on"""
+    if not status_text:
+        return False
     status_lower = status_text.lower()
+    if 'немає' in status_lower or ' немає' in status_lower:
+        return False
     return any(keyword in status_lower for keyword in ['світло', 'є', 'on'])
 
 
@@ -104,3 +108,36 @@ def minutes_to_time_str(minutes: int) -> str:
     hours = minutes // 60
     mins = minutes % 60
     return f"{hours:02d}:{mins:02d}"
+
+
+def format_off_ranges(off_ranges: list) -> list:
+    """Format off ranges as list of strings with duration"""
+    if not off_ranges:
+        return []
+
+    result = []
+    for range_item in off_ranges:
+        start = range_item['start']  # (hour, minute)
+        end = range_item['end']      # (hour, minute)
+
+        start_str = f"{start[0]:02d}:{start[1]:02d}"
+        end_str = f"{end[0]:02d}:{end[1]:02d}"
+
+        start_minutes = start[0] * 60 + start[1]
+        end_minutes = end[0] * 60 + end[1]
+
+        duration_minutes = end_minutes - start_minutes
+        if duration_minutes < 0:
+            duration_minutes += 24 * 60
+
+        duration_hours = duration_minutes // 60
+        duration_mins = duration_minutes % 60
+
+        if duration_mins > 0:
+            duration_str = f"{duration_hours}:{duration_mins:02d} год."
+        else:
+            duration_str = f"{duration_hours} год."
+
+        result.append(f"З {start_str} до {end_str}, тривалість {duration_str}")
+
+    return result

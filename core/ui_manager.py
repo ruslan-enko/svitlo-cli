@@ -6,8 +6,8 @@ import logging
 
 from textual.containers import Container
 from textual.widgets import Static, Label, Select
-from config import COLORS, NOTIFICATIONS, STATUS_TEXTS
-from utils import safe_widget_update, safe_query, format_time_duration, parse_time_to_minutes
+from core.config import COLORS, NOTIFICATIONS, STATUS_TEXTS
+from core.utils import safe_widget_update, safe_query, format_time_duration, parse_time_to_minutes, format_off_ranges
 
 
 class UIManager:
@@ -53,6 +53,27 @@ class UIManager:
             if timer_display:
                 timer_display.remove_class("status-indicator-on")
                 timer_display.add_class("status-indicator-off")
+
+    def update_off_schedule(self, data: Dict[str, Any]) -> None:
+        """Update off schedule text display"""
+        off_schedule_widget = safe_query("off-schedule-text", Static, self.app)
+
+        if not off_schedule_widget:
+            return
+
+        display_data = self.get_schedule_for_display(data)
+        off_ranges = display_data.get('off_ranges', [])
+
+        if not off_ranges:
+            safe_widget_update(off_schedule_widget, "")
+            return
+
+        formatted_lines = format_off_ranges(off_ranges)
+        if formatted_lines:
+            text = "\n".join(formatted_lines)
+            safe_widget_update(off_schedule_widget, text)
+        else:
+            safe_widget_update(off_schedule_widget, "")
     
     def update_date_display(self, data: Dict[str, Any]) -> None:
         """Update schedule date display"""
@@ -91,14 +112,16 @@ class UIManager:
                 'schedule': data.get('next_day_schedule', []),
                 'schedule_date': data.get('next_day_date', ''),
                 'is_next_day': True,
-                'has_next_day': data.get('has_next_day', False)
+                'has_next_day': data.get('has_next_day', False),
+                'off_ranges': data.get('next_day_off_ranges', [])
             }
         else:
             return {
                 'schedule': data.get('schedule', []),
                 'schedule_date': data.get('schedule_date', ''),
                 'is_next_day': False,
-                'has_next_day': data.get('has_next_day', False)
+                'has_next_day': data.get('has_next_day', False),
+                'off_ranges': data.get('off_ranges', [])
             }
     
     def get_next_day_indicator(self, data: Dict[str, Any]) -> str:
@@ -365,5 +388,9 @@ class UIManager:
     
     def _is_light_on(self, status_text: str) -> bool:
         """Check if status indicates light is on"""
+        if not status_text:
+            return False
         status_lower = status_text.lower()
+        if 'немає' in status_lower or ' немає' in status_lower:
+            return False
         return any(keyword in status_lower for keyword in ['світло', 'є', 'on'])

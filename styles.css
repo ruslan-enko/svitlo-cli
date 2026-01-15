@@ -10,6 +10,50 @@ Screen {
     width: 100%;
 }
 
+#main-content {
+    height: auto;
+}
+
+/* ============ GLOBAL BUTTON STYLE ============ */
+Button {
+    background: transparent;
+    border: none;
+    padding: 0 2;
+    min-width: 0;
+    height: auto;
+    width: auto;
+    color: #888;
+}
+
+Button:hover {
+    background: transparent;
+}
+
+Button:focus {
+    border: none;
+}
+
+/* ============ ACTIONS ============ */
+#actions-container {
+    layout: horizontal;
+    height: auto;
+    padding: 0;
+    margin-top: 1;
+    align: center middle;
+}
+
+#current-group-display {
+    color: #D96800;
+    text-style: bold;
+    margin: 0;
+}
+
+#loading-indicator {
+    color: #D96800;
+    text-style: bold;
+    height: auto;
+}
+
 /* ============ LOGO STYLES ============ */
 #timeline-label-1,
 #timeline-label-2,
@@ -20,6 +64,10 @@ Screen {
     margin: 0;
     height: auto;
     text-align: center;
+}
+
+#timeline-label-4 {
+    margin-bottom: 1;
 }
 
 /* ============ TIMELINE ============ */
@@ -59,15 +107,12 @@ Screen {
 #timeline-grid {
     text-style: bold;
     color: #666;
-    /* Gray color for timeline */
     height: auto;
     width: 100%;
     overflow-x: auto;
     overflow-y: auto;
     margin: 0;
 }
-
-
 
 #timeline-summary {
     color: #666;
@@ -108,109 +153,23 @@ Screen {
     margin: 0;
 }
 
-Label {
-    text-style: bold;
-    color: #D96800;
-    padding: 0;
-    margin: 0;
+#off-schedule-text {
+    text-align: left;
     height: auto;
-}
-
-/* ============ SELECT ============ */
-Select {
-    background: #1a1a1a;
-    border: solid #2a2a2a;
-    color: #fff;
-    height: auto;
-    width: 30;
-    min-width: 30;
-    margin: 0;
-    padding: 0;
-}
-
-Select>.select--display {
-    background: #1a1a1a;
-    color: #fff;
-    padding: 0;
-    text-style: bold;
-}
-
-Select>.select--display:hover {
-    background: #222;
-    border: solid #D96800;
-}
-
-Select>.select--display:focus {
-    border: solid #D96800;
-}
-
-Select>.select--list {
-    background: #1a1a1a;
-    border: solid #2a2a2a;
-    max-height: 12;
-}
-
-Select>.select--list .select--option {
-    background: #1a1a1a;
-    color: #fff;
-    padding: 0;
-}
-
-Select>.select--list .select--option:hover {
-    background: #222;
-}
-
-Select>.select--list .select--option-highlight {
-    background: #D96800;
-    color: #1a1a1a;
-}
-
-Select>.select--list .select--option--is-selected {
-    background: #D96800;
-    color: #1a1a1a;
-    text-style: bold;
-}
-
-/* ============ ACTIONS ============ */
-#actions-container {
-    layout: horizontal;
-    padding: 0;
-    height: auto;
-    margin-top: 1;
-    width: 100%;
-}
-
-#actions-container>Button {
-    background: #1a1a1a;
     color: #888;
-    border: solid #2a2a2a;
-    width: auto;
-    min-width: 20;
     margin: 0;
-}
-
-#current-group-display {
-    color: #D96800;
-    text-style: bold;
-    margin: 0;
-}
-
-#loading-indicator {
-    color: #D96800;
-    text-style: bold;
-    height: auto;
+    margin-top: 1;
+    margin-bottom: 1;
 }
 
 /* ============ STATUS INDICATORS ============ */
 .status-indicator-on {
     color: #D96800;
-    /* Orange color for active status */
     text-style: bold;
 }
 
 .status-indicator-off {
     color: #666;
-    /* Gray color for inactive status */
 }
 
 /* ============ INFO ============ */
@@ -225,4 +184,129 @@ Static {
     color: #666;
     padding: 0;
     margin: 0;
+}
+
+/* ============ MODAL STYLES ============ */
+.modal-container,
+.dialog-container {
+    width: auto;
+    height: auto;
+    border: solid #D96800;
+    background: #1a1a1a;
+    padding: 1;
+}
+
+.modal-title,
+.dialog-title {
+    text-style: bold;
+    color: #D96800;
+    margin-bottom: 1;
+}
+
+.modal-message {
+    color: #888;
+    margin-bottom: 1;
+}
+
+.modal-grid,
+.dialog-grid {
+    layout: grid;
+    margin-bottom: 1;
+    align: center middle;
+}
+
+.modal-grid Button,
+.dialog-grid Button {
+    background: transparent;
+    color: #888;
+    border: none;
+    min-width: 0;
+    padding: 0 2;
+    width: auto;
+}
+
+.modal-grid Button:hover,
+.dialog-grid Button:hover {
+    color: #D96800;
+    background: transparent;
+}
+
+.modal-back-container,
+.dialog-back-container {
+    layout: horizontal;
+    align: center middle;
+    margin-top: 1;
+}
+
+/* ============ DIALOG OVERLAY ============ */
+.dialog-overlay {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+/* ============ LABEL ============ */
+Label {
+    text-style: bold;
+    color: #D96800;
+    padding: 0;
+    margin: 0;
+    height: auto;
+}
+
+/* ============ GRID COLUMNS ============ */
+/* Default grid - columns set dynamically in Python via classes */
+.grid-cols-1 {
+    grid-size: 1;
+    grid-columns: 1fr;
+}
+
+.grid-cols-2 {
+    grid-size: 2;
+    grid-columns: 1fr 1fr;
+}
+
+.grid-cols-3 {
+    grid-size: 3;
+    grid-columns: 1fr 1fr 1fr;
+}
+
+/* ============ TERMINAL SIZE MODAL ============ */
+.size-modal {
+    width: 50;
+    height: auto;
+    border: solid #D96800;
+    background: #1a1a1a;
+    padding: 2;
+}
+
+.size-title {
+    text-style: bold;
+    color: #D96800;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+.size-info {
+    color: #888;
+    margin-bottom: 1;
+}
+
+.size-value {
+    text-style: bold;
+    color: #fff;
+    margin-bottom: 1;
+}
+
+.size-actions {
+    margin-top: 2;
+    text-align: center;
+}
+
+.size-hint {
+    color: #666;
+    text-align: center;
+}
+
+/* ============ LEGEND HIDING ============ */
+.legend-hidden {
+    display: none;
 }

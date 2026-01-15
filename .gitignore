@@ -19,6 +19,7 @@ sdist/
 var/
 wheels/
 *.egg-info/
+.pytest_cache/
 .installed.cfg
 *.egg
 .DS_Store
@@ -31,3 +32,4 @@ test-results/
 *.tmp
 *.bak
 *.egg-info/
+.pytest_cache/

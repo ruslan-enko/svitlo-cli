@@ -1,3 +1,5 @@
+"""Main application module for Svitlo CLI"""
+
 import warnings
 try:
     from urllib3.exceptions import NotOpenSSLWarning
@@ -7,18 +9,27 @@ except ImportError:
 
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, Container
-from textual.widgets import Static, Label, Button, Select
+from textual.widgets import Static, Label, Button
+from textual import events
 from datetime import datetime
 import logging
-
-from schedule_fetcher import ScheduleFetcher
-from ui_manager import UIManager
-from config import APP_NAME, APP_VERSION, COLORS, AVAILABLE_GROUPS, DEFAULT_GROUP, UPDATE_INTERVAL, DATA_REFRESH_INTERVAL, NOTIFICATION_DURATION
-from utils import setup_logging, handle_ui_errors, safe_query
 import os
 
-# Load CSS from file
-def load_css():
+from core.schedule_fetcher import ScheduleFetcher
+from core.ui_manager import UIManager
+from core.config import (
+    APP_NAME, APP_VERSION, COLORS, AVAILABLE_GROUPS, DEFAULT_GROUP,
+    UPDATE_INTERVAL, DATA_REFRESH_INTERVAL, NOTIFICATION_DURATION,
+    MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT
+)
+from layout.layout_manager import LayoutManager, LayoutType
+from screens import GroupSelectionScreen, GroupSelectDialog
+from ui.popup_utils import make_button_label
+from core.utils import setup_logging, handle_ui_errors
+from core.preferences import save_preferences, load_preferences, is_first_run, get_saved_group
+
+
+def load_css() -> str:
     """Load CSS styles from external file"""
     try:
         css_file = os.path.join(os.path.dirname(__file__), 'styles.css')
@@ -45,6 +56,7 @@ class SvitloApp(App):
         self.fetcher = ScheduleFetcher()
         self.ui_manager = UIManager(self)
         self.current_group = DEFAULT_GROUP
+        self.current_group_index = AVAILABLE_GROUPS.index(DEFAULT_GROUP)
         self.schedule_data = None
         self.updated = ""
         self.last_notification_time = None
@@ -54,53 +66,46 @@ class SvitloApp(App):
     def compose(self) -> ComposeResult:
         """Compose application UI"""
         with Container(id="main-container"):
-            with Vertical(id="timeline-container"):
-                # ASCII Art Logo
-                yield Label(
-                    "           _ __  __           ___ ",
-                    id="timeline-label-1"
-                )
-                yield Label(
-                    "  ____  __(_) /_/ /__    ____/ (_)",
-                    id="timeline-label-2"
-                )
-                yield Label(
-                    " (_-< |/ / / __/ / _ \  / __/ / / ",
-                    id="timeline-label-3"
-                )
-                yield Label(
-                    "/___/___/_/\__/_/\___/  \__/_/_/  ",
-                    id="timeline-label-4"
-                )
-                
-                # Timeline components
-                yield Static("", id="timeline-date")
-                yield Static("■ є  |  □ немає  |  * зараз", id="timeline-legend")
-                yield Static("", id="timeline-grid")
-                yield Static("", id="timeline-summary")
+            with Container(id="main-content"):
+                with Vertical(id="timeline-container"):
+                    # ASCII Art Logo
+                    yield Label(
+                        r"           _ __  __           ___ ",
+                        id="timeline-label-1"
+                    )
+                    yield Label(
+                        r"  ____  __(_) /_/ /__    ____/ (_)",
+                        id="timeline-label-2"
+                    )
+                    yield Label(
+                        r" (_-< |/ / / __/ / _ \  / __/ / / ",
+                        id="timeline-label-3"
+                    )
+                    yield Label(
+                        r"/___/___/_/\__/_/\___/  \__/_/_/  ",
+                        id="timeline-label-4"
+                    )
+                    
+                    # Timeline components
+                    yield Static("", id="timeline-date")
+                    yield Static("■ є  |  □ немає  |  * зараз", id="timeline-legend")
+                    yield Static("", id="timeline-grid")
+                    yield Static("", id="timeline-summary")
 
-            with Container(id="controls-container"):
-                yield Static("Завантаження...", id="timer-display")
-                yield Static("", id="next-change-info")
-                yield Static("", id="notification-display")
+                with Container(id="controls-container"):
+                    yield Static("Завантаження...", id="timer-display")
+                    yield Static("", id="next-change-info")
+                    yield Static("", id="notification-display")
 
-                yield Label("ВИБІР ГРУПИ:")
-                yield Select(
-                    [(f"Група {g}", g) for g in AVAILABLE_GROUPS],
-                    value=DEFAULT_GROUP,
-                    id="group-select"
-                )
-                yield Static("", id="loading-indicator")
+                    yield Static("", id="off-schedule-text")
 
+                    yield Static("", id="loading-indicator")
+
+            # Actions container at the bottom
             with Container(id="actions-container"):
-                yield Button("r: Оновити", id="action-refresh")
-                yield Button("q: Вихід", id="action-quit")
-
-            with Container(id="info-container"):
-                yield Static(
-                    "r: оновити  |  q: вихід",
-                    id="info-text"
-                )
+                yield Button(make_button_label("Група 6.1"), id="btn-group-select")
+                yield Button(make_button_label("Оновити"), id="action-refresh")
+                yield Button(make_button_label("Вихід"), id="action-quit")
 
         self.set_interval(UPDATE_INTERVAL, self.update_timer)
         self.set_interval(DATA_REFRESH_INTERVAL, self._do_auto_refresh)
@@ -108,9 +113,42 @@ class SvitloApp(App):
     @handle_ui_errors
     async def on_mount(self) -> None:
         """Initialize app after mounting"""
+        if is_first_run():
+            group = await self.push_screen(GroupSelectionScreen())
+            if group:
+                self.current_group = str(group)
+                self.current_group_index = AVAILABLE_GROUPS.index(self.current_group)
+                save_preferences(group, is_first_run=False)
+            else:
+                self.current_group = DEFAULT_GROUP
+                self.current_group_index = AVAILABLE_GROUPS.index(DEFAULT_GROUP)
+        else:
+            saved_group = get_saved_group()
+            if saved_group:
+                self.current_group = saved_group
+                self.current_group_index = AVAILABLE_GROUPS.index(self.current_group)
+            else:
+                self.current_group = DEFAULT_GROUP
+                self.current_group_index = AVAILABLE_GROUPS.index(DEFAULT_GROUP)
+
+        self.update_group_button_label()
         await self.load_schedule()
 
-    async def load_schedule(self):
+    def on_resize(self, event: events.Resize) -> None:
+        """Adaptive layout on terminal resize"""
+        layout_type = LayoutManager.get_layout_type(event.size.width, event.size.height)
+        self.apply_layout(layout_type)
+        
+        self._current_layout_type = layout_type
+
+    def apply_layout(self, layout_type: LayoutType) -> None:
+        """Apply layout configuration"""
+        config = LayoutManager.get_config(layout_type)
+
+        legend = self.query_one("#timeline-legend")
+        legend.display = config['show_legend']
+
+    async def load_schedule(self) -> None:
         """Load schedule data from fetcher"""
         self.ui_manager.show_loading(True)
         try:
@@ -126,20 +164,20 @@ class SvitloApp(App):
             self.ui_manager.show_loading(False)
 
     @handle_ui_errors
-    def update_ui(self, data: dict, updated: str):
+    def update_ui(self, data: dict, updated: str) -> None:
         """Update all UI components with new data"""
         self.ui_manager.update_status_display(data)
         self.ui_manager.update_timeline(data)
         self.ui_manager.update_date_display(data)
+        self.ui_manager.update_off_schedule(data)
         self.update_timer()
         self.ui_manager.check_and_show_notifications(data)
 
-    def update_timer(self):
+    def update_timer(self) -> None:
         """Update timer display and check for notifications"""
         if not self.schedule_data:
             return
 
-        # Check for notifications every minute
         current_minute = datetime.now().minute
         if self.last_notification_time != current_minute:
             self.last_notification_time = current_minute
@@ -160,33 +198,34 @@ class SvitloApp(App):
             self.action_refresh()
         elif event.button.id == "action-quit":
             self.exit()
-
-    @handle_ui_errors
-    def on_select_changed(self, event: Select.Changed) -> None:
-        """Handle group selection change"""
-        if event.value:
-            self.current_group = str(event.value)
+        elif event.button.id == "btn-group-select":
+            self.push_screen(GroupSelectDialog())
+        elif event.button.id and event.button.id.startswith("btn-group-"):
+            group = event.button.id.replace("btn-group-", "").replace("_", ".")
+            self.current_group = group
+            self.current_group_index = AVAILABLE_GROUPS.index(group)
+            save_preferences(self.current_group)
+            self.update_group_button_label()
             self.run_worker(self.load_schedule())
+
+    def update_group_button_label(self) -> None:
+        """Update the group selection button label"""
+        group_button = self.query_one("#btn-group-select", Button)
+        group_button.label = make_button_label(f"Група {self.current_group}")
 
     def action_refresh(self) -> None:
         """Refresh schedule data"""
         self.run_worker(self.load_schedule())
-    
+
     def action_toggle_day(self) -> None:
-        """Toggle between today and next day schedule"""
+        """Toggle between today and tomorrow schedule"""
+        self.ui_manager.toggle_day()
         if self.schedule_data:
-            showing_next = self.ui_manager.toggle_day()
-            day_text = "завтра" if showing_next else "сьогодні"
-            self.notify(f"Показано розклад на {day_text}", severity="information")
             self.update_ui(self.schedule_data, self.updated)
 
 
-def main():
+def main() -> None:
     """Main entry point for the application"""
     setup_logging()
     app = SvitloApp()
     app.run()
-
-
-if __name__ == "__main__":
-    main()

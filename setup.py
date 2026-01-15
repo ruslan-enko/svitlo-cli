@@ -26,7 +26,16 @@ setup(
     long_description=read_readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/ruslan-enko/svitlo-cli",
-    py_modules=["main", "schedule_fetcher", "ui_manager", "config", "utils"],
+    py_modules=[
+        "main",
+        "screens",
+    ],
+    packages=[
+        "core",
+        "layout",
+        "ui",
+        "tests",
+    ],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: End Users/Desktop",
