@@ -1,5 +1,7 @@
 """Utility functions for error handling and logging"""
 
+__version__ = "0.44"
+
 import logging
 from functools import wraps
 from typing import Callable, Any, Optional

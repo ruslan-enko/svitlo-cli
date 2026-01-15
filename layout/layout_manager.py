@@ -1,4 +1,7 @@
 """Layout manager for responsive UI adaptation"""
+
+__version__ = "0.44"
+
 from typing import Literal
 
 LayoutType = Literal['tiny', 'small', 'medium', 'large']

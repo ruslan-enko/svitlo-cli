@@ -101,7 +101,11 @@ class ScheduleFetcher:
             next_day_data = self._extract_next_day_schedule(full_page_text, target_group)
             
             # Calculate next event time
-            from datetime import datetime
+"""Schedule fetcher module for Svitlo CLI"""
+
+__version__ = "0.44"
+
+from datetime import datetime
             now = datetime.now()
             now_minutes = now.hour * 60 + now.minute
             

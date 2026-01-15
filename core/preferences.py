@@ -1,3 +1,7 @@
+"""User preferences management for Svitlo CLI"""
+
+__version__ = "0.44"
+
 import json
 import os
 from typing import Optional

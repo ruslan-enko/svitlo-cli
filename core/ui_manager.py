@@ -1,5 +1,7 @@
 """UI management module for Svitlo CLI application"""
 
+__version__ = "0.44"
+
 from datetime import datetime
 from typing import Dict, Any, Optional
 import logging

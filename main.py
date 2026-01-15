@@ -1,5 +1,7 @@
 """Main application module for Svitlo CLI"""
 
+__version__ = "0.44"
+
 import warnings
 try:
     from urllib3.exceptions import NotOpenSSLWarning

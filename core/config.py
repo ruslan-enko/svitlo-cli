@@ -1,4 +1,7 @@
 """Configuration and constants for Svitlo CLI application"""
+
+__version__ = "0.44"
+
 import os
 
 # Application info

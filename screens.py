@@ -1,5 +1,7 @@
 """Popup screens for Svitlo CLI application"""
 
+__version__ = "0.44"
+
 from textual.app import ComposeResult
 from textual.containers import Container, Grid
 from textual.widgets import Label, Button
