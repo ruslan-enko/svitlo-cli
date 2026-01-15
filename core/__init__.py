@@ -1,1 +1,1 @@
-__version__ = "0.44"
+"""Core package for Svitlo CLI"""

@@ -1,51 +1,51 @@
 """UI management module for Svitlo CLI application"""
 
-__version__ = "0.44"
-
 from datetime import datetime
 from typing import Dict, Any, Optional
 import logging
 
 from textual.containers import Container
 from textual.widgets import Static, Label, Select
-from core.config import COLORS, NOTIFICATIONS, STATUS_TEXTS
-from core.utils import safe_widget_update, safe_query, format_time_duration, parse_time_to_minutes, format_off_ranges
+from core.config import (
+    COLORS, NOTIFICATIONS, STATUS_TEXTS,
+    STATUS_LIGHT_ON, STATUS_LIGHT_OFF,
+    NOTIFICATION_THRESHOLD
+)
+from core.utils import (
+    safe_widget_update, safe_query, format_time_duration,
+    parse_time_to_minutes, format_off_ranges,
+    is_light_on, get_current_time_minutes,
+    time_range_contains, minutes_to_time_str
+)
 
 
 class UIManager:
     """Manages UI updates and state for the application"""
-    
+
     def __init__(self, app):
-        """Initialize UI manager with app reference"""
         self.app = app
         self.logger = logging.getLogger(__name__)
-        self.showing_next_day = False  # Toggle between today/next day
-    
+        self.showing_next_day = False
+
     def show_loading(self, is_loading: bool) -> None:
-        """Show/hide loading indicators and update UI accordingly"""
         loading_text = STATUS_TEXTS['loading'] if is_loading else ""
         updating_text = STATUS_TEXTS['updating'] if is_loading else ""
-        
         loading_indicator = safe_query("loading-indicator", Static, self.app)
         timer_display = safe_query("timer-display", Static, self.app)
-        
         safe_widget_update(loading_indicator, f"{loading_text}")
         safe_widget_update(timer_display, f"{updating_text}")
-    
+
     def show_error(self, error: str) -> None:
-        """Display error message to the user"""
         timer_display = safe_query("timer-display", Static, self.app)
         safe_widget_update(timer_display, f"□ Помилка: {error}")
         self.logger.error(f"Error displayed: {error}")
-    
+
     def update_status_display(self, data: Dict[str, Any]) -> None:
-        """Update main status display with current power status"""
         status = data.get('current_status', 'unknown')
         data_source = "REAL" if not data.get('is_mock') else "MOCK"
-        
         timer_display = safe_query("timer-display", Static, self.app)
-        
-        if self._is_light_on(status):
+
+        if is_light_on(status):
             safe_widget_update(timer_display, f"█ {status} ({data_source})")
             if timer_display:
                 timer_display.remove_class("status-indicator-off")
@@ -57,58 +57,44 @@ class UIManager:
                 timer_display.add_class("status-indicator-off")
 
     def update_off_schedule(self, data: Dict[str, Any]) -> None:
-        """Update off schedule text display"""
         off_schedule_widget = safe_query("off-schedule-text", Static, self.app)
-
         if not off_schedule_widget:
             return
-
         display_data = self.get_schedule_for_display(data)
         off_ranges = display_data.get('off_ranges', [])
-
         if not off_ranges:
             safe_widget_update(off_schedule_widget, "")
             return
-
         formatted_lines = format_off_ranges(off_ranges)
         if formatted_lines:
             text = "\n".join(formatted_lines)
             safe_widget_update(off_schedule_widget, text)
         else:
             safe_widget_update(off_schedule_widget, "")
-    
+
     def update_date_display(self, data: Dict[str, Any]) -> None:
-        """Update schedule date display"""
         display_data = self.get_schedule_for_display(data)
         schedule_date = display_data.get('schedule_date', '')
-        
         if schedule_date:
             date_widget = safe_query("timeline-date", Static, self.app)
-            
-            # Add next day indicator if available
             next_day_indicator = self.get_next_day_indicator(data)
-            
             if next_day_indicator:
                 safe_widget_update(date_widget, f"Дата: {schedule_date} | {next_day_indicator}")
             else:
                 safe_widget_update(date_widget, f"Дата: {schedule_date}")
-    
+
     def update_group_display(self, group: str) -> None:
-        """Update current group display"""
         group_display = safe_query("current-group-display", Static, self.app)
         safe_widget_update(group_display, f"Поточна група: {group}")
-    
+
     def toggle_day(self) -> bool:
-        """Toggle between today and next day schedule"""
         self.showing_next_day = not self.showing_next_day
         return self.showing_next_day
-    
+
     def is_showing_next_day(self) -> bool:
-        """Check if currently showing next day schedule"""
         return self.showing_next_day
-    
+
     def get_schedule_for_display(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Get the appropriate schedule based on current day toggle"""
         if self.showing_next_day and data.get('has_next_day'):
             return {
                 'schedule': data.get('next_day_schedule', []),
@@ -117,263 +103,137 @@ class UIManager:
                 'has_next_day': data.get('has_next_day', False),
                 'off_ranges': data.get('next_day_off_ranges', [])
             }
-        else:
-            return {
-                'schedule': data.get('schedule', []),
-                'schedule_date': data.get('schedule_date', ''),
-                'is_next_day': False,
-                'has_next_day': data.get('has_next_day', False),
-                'off_ranges': data.get('off_ranges', [])
-            }
-    
+        return {
+            'schedule': data.get('schedule', []),
+            'schedule_date': data.get('schedule_date', ''),
+            'is_next_day': False,
+            'has_next_day': data.get('has_next_day', False),
+            'off_ranges': data.get('off_ranges', [])
+        }
+
     def get_next_day_indicator(self, data: Dict[str, Any]) -> str:
-        """Get indicator text for next day availability"""
         if data.get('has_next_day'):
-            if self.showing_next_day:
-                return "Завтра (натисніть t для сьогодні)"
-            else:
-                return "Є розклад на завтра (натисніть t)"
+            return "Завтра (натисніть t для сьогодні)" if self.showing_next_day else "Є розклад на завтра (натисніть t)"
         return ""
-    
+
     def update_timeline(self, data: Dict[str, Any]) -> None:
-        """Update timeline visualization"""
         now = datetime.now()
-        
-        # Use the appropriate schedule based on day toggle
         display_data = self.get_schedule_for_display(data)
         schedule = {item['time_range']: item['status'] for item in display_data.get('schedule', [])}
-        
-        # Don't show current time marker when viewing next day
         is_next_day = display_data.get('is_next_day', False)
-        
+
         on_count = 0
         off_count = 0
         timeline_symbols = []
-        
+
         for i in range(48):
             hour = i // 2
             minute = 30 if i % 2 == 1 else 0
             time_str = f"{hour:02d}:{minute:02d} - {hour:02d}:{minute:02d}"
-            
             status = schedule.get(time_str, 'on')
-            
-            # Check if this is the current time slot (only for today)
             is_current_time = not is_next_day and hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30))
-            
-            if status == 'off':  # Light is OFF
+
+            if status == 'off':
                 off_count += 1
-                if is_current_time:
-                    timeline_symbols.append(f"[#D96800]*[/#D96800]")  # Orange current time
-                else:
-                    timeline_symbols.append("[#666]□[/#666]")  # Gray no light
-            else:  # Light is ON
+                timeline_symbols.append(f"[#D96800]*[/#D96800]" if is_current_time else "[#666]□[/#666]")
+            else:
                 on_count += 1
-                if is_current_time:
-                    timeline_symbols.append(f"[#D96800]*[/#D96800]")  # Orange current time
-                else:
-                    timeline_symbols.append("[#fff]■[/#fff]")  # White has light
-        
-        # Update timeline as single string with spacing
+                timeline_symbols.append(f"[#D96800]*[/#D96800]" if is_current_time else "[#fff]■[/#fff]")
+
         timeline_widget = safe_query("timeline-grid", Static, self.app)
         if timeline_widget:
-            timeline_str = " ".join(timeline_symbols)  # Add space between symbols
-            safe_widget_update(timeline_widget, timeline_str)
-        
+            safe_widget_update(timeline_widget, " ".join(timeline_symbols))
+
         self._update_timeline_summary(on_count, off_count)
-    
+
     def update_timer(self, schedule_data: Optional[Dict[str, Any]]) -> None:
-        """Update timer display with next change info"""
         if not schedule_data:
             return
-        
-        # Get the appropriate schedule based on day toggle
         display_data = self.get_schedule_for_display(schedule_data)
         schedule = display_data.get('schedule', [])
         is_next_day = display_data.get('is_next_day', False)
-        
         now = datetime.now()
         timer_display = safe_query("timer-display", Static, self.app)
         next_change_info = safe_query("next-change-info", Static, self.app)
-        
+
         if is_next_day:
-            # For next day, show the first event of the day (not countdown from now)
-            # Find first 'off' and first 'on' status in the schedule
-            first_off = None
-            first_on = None
-            prev_status = None
-            found_off = False
-
-            for item in schedule:
-                time_range = item['time_range']
-                status = item['status']
-                start_time = time_range.split(' - ')[0]
-
-                # Handle case where first item is already 'off' (e.g., 00:00)
-                if prev_status is None and status == 'off':
-                    first_off = start_time
-                    prev_status = status
-                    continue
-
-                # First outage - when status changes from 'on' to 'off'
-                if status == 'off' and prev_status == 'on':
-                    first_off = start_time
-                    first_on = None  # Reset first_on to find it after this outage
-                    found_off = False
-
-                # First light after the first outage
-                if first_off and status == 'off':
-                    found_off = True
-                elif first_off and status == 'on' and found_off and first_on is None:
-                    first_on = start_time
-                    break  # Stop after finding first light after first outage
-
-                prev_status = status
-
+            first_off, first_on = self._find_first_outage_times(schedule)
             if first_off and first_on:
-                # Show info about tomorrow's schedule
-                timer_text = f"Завтра перше відключення о {first_off}"
-                next_text = f"Світло з'явиться о {first_on}"
-                safe_widget_update(timer_display, timer_text)
-                safe_widget_update(next_change_info, next_text)
+                safe_widget_update(timer_display, f"Завтра перше відключення о {first_off}")
+                safe_widget_update(next_change_info, f"Світло з'явиться о {first_on}")
             else:
                 safe_widget_update(timer_display, STATUS_TEXTS['no_more_changes'])
                 safe_widget_update(next_change_info, "")
             return
-        
-        # Original logic for today
+
         next_change, next_status = self._find_next_change(schedule, now)
-        
         if next_change and next_status:
             delta = next_change - now
             total_seconds = max(0, int(delta.total_seconds()))
             time_str = format_time_duration(total_seconds)
-            
-            # Determine if current has light by checking if now is within any 'off' range
-            current_has_light = True  # default: assume light is on
-            for item in schedule:
-                time_range = item['time_range']
-                start_str, end_str = time_range.split(' - ')
-                start_hour, start_min = map(int, start_str.split(':'))
-                end_hour, end_min = map(int, end_str.split(':'))
-                
-                now_min = now.hour * 60 + now.minute
-                start_min_total = start_hour * 60 + start_min
-                end_min_total = end_hour * 60 + end_min
-                
-                in_range = False
-                if start_min_total < end_min_total:
-                    in_range = start_min_total <= now_min < end_min_total
-                elif start_min_total == end_min_total:
-                    in_range = start_min_total <= now_min < start_min_total + 30
-                else:
-                    in_range = now_min >= start_min_total or now_min < end_min_total
-                
-                if in_range:
-                    current_has_light = (item['status'] == 'on')
-                    break
-            
+            current_has_light = self._check_current_light_status(schedule, now)
+
             if current_has_light:
-                # Currently HAVE light, next will be TURNED OFF
-                timer_text = f"До вимкнення залишилось: {time_str}"
-                next_text = f"Світло вимкнеться о {next_change.strftime('%H:%M')}"
+                safe_widget_update(timer_display, f"До вимкнення залишилось: {time_str}")
+                safe_widget_update(next_change_info, f"Світло вимкнеться о {next_change.strftime('%H:%M')}")
             else:
-                # Currently NO light, next will be TURNED ON  
-                timer_text = f"До ввімкнення залишилось: {time_str}"
-                next_text = f"Світло з'явиться о {next_change.strftime('%H:%M')}"
-            
-            safe_widget_update(timer_display, timer_text)
-            safe_widget_update(next_change_info, next_text)
+                safe_widget_update(timer_display, f"До ввімкнення залишилось: {time_str}")
+                safe_widget_update(next_change_info, f"Світло з'явиться о {next_change.strftime('%H:%M')}")
         else:
             safe_widget_update(timer_display, STATUS_TEXTS['no_more_changes'])
             safe_widget_update(next_change_info, "")
-    
-    def show_notification(self, message: str, duration: int = 10) -> None:
-        """Show temporary notification"""
-        notification_widget = safe_query("notification-display", Static, self.app)
-        safe_widget_update(notification_widget, message)
-        
-        def clear_notification():
-            safe_widget_update(notification_widget, "")
-        
-        from threading import Timer
-        timer = Timer(duration, clear_notification)
-        timer.daemon = True
-        timer.start()
-    
-    def check_and_show_notifications(self, data: Dict[str, Any]) -> None:
-        """Check for and show relevant notifications"""
-        if not data:
-            return
-        
-        now = datetime.now()
-        current_status = data.get('current_status', 'unknown')
-        schedule = data.get('schedule', [])
-        
-        # Check if currently no power
-        if not self._is_light_on(current_status):
-            self.show_notification(NOTIFICATIONS['no_light_now'])
-            return
-        
-        # Find the next change in schedule
-        next_change_time = None
-        next_change_status = None
-        
-        for i, item in enumerate(schedule):
-            time_range = item['time_range']
-            parts = time_range.split(' - ')
-            if len(parts) == 2:
-                start_str = parts[0].strip()
-                hour = int(start_str.split(':')[0])
-                minute = int(start_str.split(':')[1]) if ':' in start_str and len(start_str.split(':')) > 1 else 0
-                target_time = now.replace(minute=minute, second=0, microsecond=0, hour=hour)
-                
-                # If this time is in the future
-                if target_time > now:
-                    # Check if this is a status change from current
-                    current_item_status = schedule[i-1]['status'] if i > 0 else 'off'
-                    if item['status'] != current_item_status:
-                        next_change_time = target_time
-                        next_change_status = item['status']
-                        break
-        
-        # Show notification if next change is within threshold
-        if next_change_time and next_change_status:
-            diff = (next_change_time - now).total_seconds() / 60  # minutes
-            
-            if 0 < diff <= 30:  # Within next 30 minutes
-                minutes = int(diff)
-                if next_change_status == 'on':
-                    msg = NOTIFICATIONS['light_coming_soon'].format(minutes)
-                else:
-                    msg = NOTIFICATIONS['light_going_soon'].format(minutes)
-                self.show_notification(msg)
-    
 
-    def _update_timeline_summary(self, on_count: int, off_count: int) -> None:
-        """Update timeline summary statistics"""
-        summary_widget = safe_query("timeline-summary", Static, self.app)
-        if not summary_widget:
-            return
-        
-        on_hours = on_count // 2
-        on_mins = (on_count % 2) * 30
-        off_hours = off_count // 2
-        off_mins = (off_count % 2) * 30
-        
-        on_text = f"{on_hours}год {on_mins}хв" if on_mins > 0 else f"{on_hours}год"
-        off_text = f"{off_hours}год {off_mins}хв" if off_mins > 0 else f"{off_hours}год"
-        
-        summary = f"■ є: {on_text}  |  □ немає: {off_text}  |  * зараз"
-        safe_widget_update(summary_widget, summary)
-    
+    def _find_first_outage_times(self, schedule: list) -> tuple:
+        first_off = None
+        first_on = None
+        prev_status = None
+        found_off = False
+
+        for item in schedule:
+            time_range = item['time_range']
+            status = item['status']
+            start_time = time_range.split(' - ')[0]
+
+            if prev_status is None and status == 'off':
+                first_off = start_time
+                prev_status = status
+                continue
+
+            if status == 'off' and prev_status == 'on':
+                first_off = start_time
+                first_on = None
+                found_off = False
+
+            if first_off and status == 'off':
+                found_off = True
+            elif first_off and status == 'on' and found_off and first_on is None:
+                first_on = start_time
+                break
+
+            prev_status = status
+
+        return first_off, first_on
+
+    def _check_current_light_status(self, schedule: list, now: datetime) -> bool:
+        now_min = now.hour * 60 + now.minute
+        for item in schedule:
+            time_range = item['time_range']
+            start_str, end_str = time_range.split(' - ')
+            start_hour, start_min = map(int, start_str.split(':'))
+            end_hour, end_min = map(int, end_str.split(':'))
+            start_min_total = start_hour * 60 + start_min
+            end_min_total = end_hour * 60 + end_min
+            if time_range_contains(now_min, start_min_total, end_min_total):
+                return item['status'] == 'on'
+        return True
+
     def _find_next_change(self, schedule: list, now: datetime) -> tuple:
-        """Find next schedule change"""
         now_time = now.hour * 60 + now.minute
         current_status = None
         next_change = None
         next_status = None
         min_diff = float('inf')
-        
+
         for item in schedule:
             time_range = item['time_range']
             parts = time_range.split(' - ')
@@ -383,23 +243,75 @@ class UIManager:
                 minute = int(start_str.split(':')[1]) if ':' in start_str and len(start_str.split(':')) > 1 else 0
                 target_time = now.replace(minute=minute, second=0, microsecond=0, hour=hour)
                 target_min = hour * 60 + minute
-                
                 diff = target_min - now_time
-                
+
                 if diff <= 0:
                     current_status = item['status']
                 elif diff > 0 and item['status'] != current_status and diff < min_diff:
                     min_diff = diff
                     next_change = target_time
                     next_status = item['status']
-        
+
         return next_change, next_status
-    
-    def _is_light_on(self, status_text: str) -> bool:
-        """Check if status indicates light is on"""
-        if not status_text:
-            return False
-        status_lower = status_text.lower()
-        if 'немає' in status_lower or ' немає' in status_lower:
-            return False
-        return any(keyword in status_lower for keyword in ['світло', 'є', 'on'])
+
+    def show_notification(self, message: str, duration: int = 10) -> None:
+        notification_widget = safe_query("notification-display", Static, self.app)
+        safe_widget_update(notification_widget, message)
+
+        def clear_notification():
+            safe_widget_update(notification_widget, "")
+
+        from threading import Timer
+        timer = Timer(duration, clear_notification)
+        timer.daemon = True
+        timer.start()
+
+    def check_and_show_notifications(self, data: Dict[str, Any]) -> None:
+        if not data:
+            return
+        now = datetime.now()
+        current_status = data.get('current_status', 'unknown')
+        schedule = data.get('schedule', [])
+
+        if not is_light_on(current_status):
+            self.show_notification(NOTIFICATIONS['no_light_now'])
+            return
+
+        next_change_time = None
+        next_change_status = None
+
+        for i, item in enumerate(schedule):
+            time_range = item['time_range']
+            parts = time_range.split(' - ')
+            if len(parts) == 2:
+                start_str = parts[0].strip()
+                hour = int(start_str.split(':')[0])
+                minute = int(start_str.split(':')[1]) if ':' in start_str and len(start_str.split(':')) > 1 else 0
+                target_time = now.replace(minute=minute, second=0, microsecond=0, hour=hour)
+
+                if target_time > now:
+                    current_item_status = schedule[i-1]['status'] if i > 0 else 'off'
+                    if item['status'] != current_item_status:
+                        next_change_time = target_time
+                        next_change_status = item['status']
+                        break
+
+        if next_change_time and next_change_status:
+            diff = (next_change_time - now).total_seconds() / 60
+            if 0 < diff <= NOTIFICATION_THRESHOLD:
+                minutes = int(diff)
+                msg = NOTIFICATIONS['light_coming_soon'].format(minutes) if next_change_status == 'on' else NOTIFICATIONS['light_going_soon'].format(minutes)
+                self.show_notification(msg)
+
+    def _update_timeline_summary(self, on_count: int, off_count: int) -> None:
+        summary_widget = safe_query("timeline-summary", Static, self.app)
+        if not summary_widget:
+            return
+        on_hours = on_count // 2
+        on_mins = (on_count % 2) * 30
+        off_hours = off_count // 2
+        off_mins = (off_count % 2) * 30
+        on_text = f"{on_hours}год {on_mins}хв" if on_mins > 0 else f"{on_hours}год"
+        off_text = f"{off_hours}год {off_mins}хв" if off_mins > 0 else f"{off_hours}год"
+        summary = f"■ є: {on_text}  |  □ немає: {off_text}  |  * зараз"
+        safe_widget_update(summary_widget, summary)

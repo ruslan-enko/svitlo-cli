@@ -101,11 +101,7 @@ class ScheduleFetcher:
             next_day_data = self._extract_next_day_schedule(full_page_text, target_group)
             
             # Calculate next event time
-"""Schedule fetcher module for Svitlo CLI"""
-
-__version__ = "0.44"
-
-from datetime import datetime
+            from datetime import datetime
             now = datetime.now()
             now_minutes = now.hour * 60 + now.minute
             
@@ -113,18 +109,14 @@ from datetime import datetime
             for off_range in off_ranges:
                 start_min = off_range['start'][0] * 60 + off_range['start'][1]
                 end_min = off_range['end'][0] * 60 + off_range['end'][1]
-                if off_range.get('original_end_hour') == 24:
-                    end_min = 1440
-
+                
                 if start_min > now_minutes:
+                    # Next outage will start
                     next_event_text = f"Наступне відключення о {off_range['start'][0]:02d}:{off_range['start'][1]:02d}"
                     break
                 elif start_min <= now_minutes < end_min:
-                    if off_range.get('original_end_hour') == 24:
-                        end_hour_display = 24
-                    else:
-                        end_hour_display = off_range['end'][0]
-                    next_event_text = f"Світло з'явиться о {end_hour_display:02d}:{off_range['end'][1]:02d}"
+                    # Currently in outage, next event is when light comes back
+                    next_event_text = f"Світло з'явиться о {off_range['end'][0]:02d}:{off_range['end'][1]:02d}"
                     break
             
             result = {
@@ -234,21 +226,11 @@ from datetime import datetime
         """Parse time ranges from text and return list of start/end times"""
         ranges = []
         for part in text.split(','):
-            part = part.strip()
-            match = re.search(r'(?:з\s+)?(\d{1,2}):(\d{2})\s+до\s+(\d{1,2}):(\d{2})', part)
+            match = re.search(r'(?:з\s+)?(\d{1,2}):(\d{2})\s+до\s+(\d{1,2}):(\d{2})', part.strip())
             if match:
-                start_hour = int(match.group(1))
-                start_min = int(match.group(2))
-                end_hour = int(match.group(3))
-                end_min = int(match.group(4))
-
-                if end_hour == 24:
-                    end_hour = 0
-
                 ranges.append({
-                    'start': (start_hour, start_min),
-                    'end': (end_hour, end_min),
-                    'original_end_hour': int(match.group(3))
+                    'start': (int(match.group(1)), int(match.group(2))),
+                    'end': (int(match.group(3)), int(match.group(4)))
                 })
         return ranges
 
@@ -261,7 +243,7 @@ from datetime import datetime
             time_point = (hour, minute)
 
             is_off = any(
-                self._is_time_in_range(time_point, r['start'], r['end'], r.get('original_end_hour'))
+                self._is_time_in_range(time_point, r['start'], r['end'])
                 for r in off_ranges
             )
 
@@ -271,14 +253,11 @@ from datetime import datetime
             })
         return schedule
 
-    def _is_time_in_range(self, time: tuple, start: tuple, end: tuple, original_end_hour: Optional[int] = None) -> bool:
+    def _is_time_in_range(self, time: tuple, start: tuple, end: tuple) -> bool:
         """Check if a specific time falls within a range"""
         time_min = time[0] * 60 + time[1]
         start_min = start[0] * 60 + start[1]
         end_min = end[0] * 60 + end[1]
-
-        if original_end_hour == 24:
-            return time_min >= start_min and time_min < 1440
 
         if start_min < end_min:
             return start_min <= time_min < end_min
@@ -292,7 +271,7 @@ from datetime import datetime
         current_time = (now.hour, now.minute)
 
         for off_range in off_ranges:
-            if self._is_time_in_range(current_time, off_range['start'], off_range['end'], off_range.get('original_end_hour')):
+            if self._is_time_in_range(current_time, off_range['start'], off_range['end']):
                 return 'Світла немає'
         return 'Світло є'
 

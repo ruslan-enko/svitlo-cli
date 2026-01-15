@@ -1,10 +1,9 @@
 """Utility functions for error handling and logging"""
 
-__version__ = "0.44"
-
 import logging
 from functools import wraps
 from typing import Callable, Any, Optional
+from datetime import datetime
 
 
 def setup_logging(level: int = logging.WARNING) -> None:
@@ -23,7 +22,6 @@ def safe_query(widget_id: str, widget_type: type, app=None) -> Optional[Any]:
     """Safely query for a widget with proper error handling"""
     try:
         if app is None:
-            # Try to get app from global context if available
             return None
         return app.query_one(f"#{widget_id}", widget_type)
     except Exception as e:
@@ -70,11 +68,9 @@ def format_time_duration(seconds: int) -> str:
     """Format seconds into human readable time"""
     if seconds <= 0:
         return "0сек"
-    
     hours = seconds // 3600
     minutes = (seconds % 3600) // 60
     secs = seconds % 60
-    
     parts = []
     if hours > 0:
         parts.append(f"{hours}год")
@@ -82,7 +78,6 @@ def format_time_duration(seconds: int) -> str:
         parts.append(f"{minutes}хв")
     if secs > 0 or not parts:
         parts.append(f"{secs}сек")
-    
     return " ".join(parts)
 
 
@@ -116,30 +111,56 @@ def format_off_ranges(off_ranges: list) -> list:
     """Format off ranges as list of strings with duration"""
     if not off_ranges:
         return []
-
     result = []
     for range_item in off_ranges:
-        start = range_item['start']  # (hour, minute)
-        end = range_item['end']      # (hour, minute)
-
+        start = range_item['start']
+        end = range_item['end']
         start_str = f"{start[0]:02d}:{start[1]:02d}"
         end_str = f"{end[0]:02d}:{end[1]:02d}"
-
         start_minutes = start[0] * 60 + start[1]
         end_minutes = end[0] * 60 + end[1]
-
         duration_minutes = end_minutes - start_minutes
         if duration_minutes < 0:
             duration_minutes += 24 * 60
-
         duration_hours = duration_minutes // 60
         duration_mins = duration_minutes % 60
-
         if duration_mins > 0:
             duration_str = f"{duration_hours}:{duration_mins:02d} год."
         else:
             duration_str = f"{duration_hours} год."
-
         result.append(f"З {start_str} до {end_str}, тривалість {duration_str}")
-
     return result
+
+
+def parse_group_from_button_id(button_id: str, prefix: str = "btn-group-") -> Optional[str]:
+    """Parse group from button ID like 'btn-group-6_1' -> '6.1'"""
+    if button_id and button_id.startswith(prefix):
+        return button_id[len(prefix):].replace("_", ".")
+    return None
+
+
+def button_id_from_group(group: str, prefix: str = "btn-group-") -> str:
+    """Create button ID from group like '6.1' -> 'btn-group-6_1'"""
+    return f"{prefix}{group.replace('.', '_')}"
+
+
+def get_current_time_minutes() -> int:
+    """Get current time as minutes from midnight"""
+    now = datetime.now()
+    return now.hour * 60 + now.minute
+
+
+def time_range_contains(current_minutes: int, start_minutes: int, end_minutes: int) -> bool:
+    """Check if current time falls within a time range (handles midnight crossing)"""
+    if start_minutes < end_minutes:
+        return start_minutes <= current_minutes < end_minutes
+    else:
+        return current_minutes >= start_minutes or current_minutes < end_minutes
+
+
+def calculate_duration_minutes(start_minutes: int, end_minutes: int) -> int:
+    """Calculate duration in minutes between two times (handles midnight crossing)"""
+    duration = end_minutes - start_minutes
+    if duration < 0:
+        duration += 24 * 60
+    return duration
