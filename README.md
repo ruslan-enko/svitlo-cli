@@ -27,3 +27,4 @@ svitlo-cli
 - Timer to next change
 - Support for all groups (1.1-6.2)
 - Next day schedule (when available)
+

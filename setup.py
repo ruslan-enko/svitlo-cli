@@ -3,6 +3,7 @@
 from setuptools import setup, find_packages
 import os
 
+
 # Read README file
 def read_readme():
     with open("README.md", "r", encoding="utf-8") as fh:
