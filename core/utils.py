@@ -7,12 +7,11 @@ from datetime import datetime
 
 
 def setup_logging(level: int = logging.WARNING) -> None:
-    """Setup application logging with file and console handlers"""
+    """Setup application logging with console output only"""
     logging.basicConfig(
         level=level,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler('svitlo.log'),
             logging.StreamHandler()
         ]
     )

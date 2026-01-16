@@ -28,3 +28,4 @@ svitlo-cli
 - Support for all groups (1.1-6.2)
 - Next day schedule (when available)
 
+AI Coded Project
