@@ -1,6 +1,6 @@
 """UI management module for Svitlo CLI application"""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 import logging
 
@@ -166,12 +166,12 @@ class UIManager:
                 safe_widget_update(next_change_info, "")
             return
 
-        next_change, next_status = self._find_next_change(schedule, now)
+        next_change, next_status, current_status = self._find_next_change(schedule, now)
         if next_change and next_status:
             delta = next_change - now
             total_seconds = max(0, int(delta.total_seconds()))
             time_str = format_time_duration(total_seconds)
-            current_has_light = self._check_current_light_status(schedule, now)
+            current_has_light = current_status == 'on'
 
             if current_has_light:
                 safe_widget_update(timer_display, f"До вимкнення залишилось: {time_str}")
@@ -241,7 +241,6 @@ class UIManager:
                 start_str = parts[0].strip()
                 hour = int(start_str.split(':')[0])
                 minute = int(start_str.split(':')[1]) if ':' in start_str and len(start_str.split(':')) > 1 else 0
-                target_time = now.replace(minute=minute, second=0, microsecond=0, hour=hour)
                 target_min = hour * 60 + minute
                 diff = target_min - now_time
 
@@ -249,10 +248,28 @@ class UIManager:
                     current_status = item['status']
                 elif diff > 0 and item['status'] != current_status and diff < min_diff:
                     min_diff = diff
+                    target_time = now.replace(minute=minute, second=0, microsecond=0, hour=hour)
                     next_change = target_time
                     next_status = item['status']
 
-        return next_change, next_status
+        if next_change is None and schedule:
+            for item in schedule:
+                time_range = item['time_range']
+                parts = time_range.split(' - ')
+                if len(parts) == 2:
+                    start_str = parts[0].strip()
+                    hour = int(start_str.split(':')[0])
+                    minute = int(start_str.split(':')[1]) if ':' in start_str and len(start_str.split(':')) > 1 else 0
+                    target_min = hour * 60 + minute + 24 * 60
+                    diff = target_min - now_time
+
+                    if item['status'] != current_status and diff < min_diff:
+                        min_diff = diff
+                        target_time = now.replace(minute=minute, second=0, microsecond=0, hour=hour) + timedelta(days=1)
+                        next_change = target_time
+                        next_status = item['status']
+
+        return next_change, next_status, current_status
 
     def show_notification(self, message: str, duration: int = 10) -> None:
         notification_widget = safe_query("notification-display", Static, self.app)
