@@ -2,17 +2,20 @@
 
 Screen {
     background: #1a1a1a;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 #main-container {
     layout: vertical;
     padding: 1;
-    height: 100%;
+    height: auto;
     width: 100%;
 }
 
 #main-content {
     height: auto;
+    overflow-y: auto;
 }
 
 /* ============ GLOBAL BUTTON STYLE ============ */

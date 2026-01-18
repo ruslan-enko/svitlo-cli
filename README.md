@@ -19,6 +19,9 @@ svitlo-cli
 
 - `t` - Switch between today/tomorrow
 - `r` - Refresh data
+- `↑/↓` - Scroll up/down
+- `PgUp/PgDn` - Page up/down
+- `Home/End` - Jump to top/bottom
 - `q` - Exit
 
 ## Features

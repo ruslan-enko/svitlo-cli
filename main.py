@@ -60,8 +60,17 @@ class SvitloApp(App):
     BINDINGS = [
         ("r", "refresh", "Оновити"),
         ("t", "toggle_day", "Завтра/Сьогодні"),
+        ("up", "scroll_up", "Вгору"),
+        ("down", "scroll_down", "Вниз"),
+        ("pageup", "page_up", "Сторінка вгору"),
+        ("pagedown", "page_down", "Сторінка вниз"),
+        ("home", "scroll_home", "На початок"),
+        ("end", "scroll_end", "В кінець"),
         ("q", "quit", "Вихід"),
     ]
+    
+    # Enable scrolling when content doesn't fit on screen
+    ENABLE_SCROLLING = True
 
     def __init__(self):
         super().__init__()
