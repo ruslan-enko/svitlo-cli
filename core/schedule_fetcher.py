@@ -10,6 +10,8 @@ except ImportError:
         return func
 
 
+from core.config import AVAILABLE_GROUPS
+
 class ScheduleFetcher:
     """Handles fetching power outage schedule data from the website"""
     BASE_URL = "https://poweron.loe.lviv.ua"
@@ -18,8 +20,8 @@ class ScheduleFetcher:
         self.logger = logging.getLogger(__name__)
 
     @handle_async_errors
-    async def fetch_group_schedule(self, group: str) -> Dict:
-        """Fetch power outage schedule for a specific group"""
+    async def fetch_schedules(self) -> Dict:
+        """Fetch power outage schedules for all groups"""
         html_content = ""
         
         try:
@@ -49,13 +51,15 @@ class ScheduleFetcher:
                         if browser:
                             await browser.close()
                 
-                schedule_data = self._parse_main_page(html_content, group)
-                self.logger.info(f"Successfully fetched schedule for group {group}")
+                schedules = {}
+                for group in AVAILABLE_GROUPS:
+                    schedules[group] = self._parse_main_page(html_content, group)
+                
+                self.logger.info("Successfully fetched schedules for all groups")
 
                 return {
                     'success': True,
-                    'group': group,
-                    'data': schedule_data,
+                    'data': schedules,
                     'updated': datetime.now().isoformat()
                 }
                 
@@ -64,14 +68,19 @@ class ScheduleFetcher:
                 raise
                 
         except Exception as e:
-            self.logger.error(f"Failed to fetch schedule for group {group}: {e}")
-            mock_data = self._get_mock_schedule(group)
-            mock_data['is_mock'] = True
+            self.logger.error(f"Failed to fetch schedules: {e}")
+            
+            # Generate mock data for all groups
+            mock_schedules = {}
+            for group in AVAILABLE_GROUPS:
+                mock_data = self._get_mock_schedule(group)
+                mock_data['is_mock'] = True
+                mock_schedules[group] = mock_data
+                
             return {
                 'success': False,
                 'error': str(e),
-                'group': group,
-                'data': mock_data
+                'data': mock_schedules
             }
 
     def _parse_main_page(self, html: str, target_group: str) -> Dict:
@@ -247,8 +256,13 @@ class ScheduleFetcher:
                 for r in off_ranges
             )
 
+            end_hour = hour if minute == 0 else hour + 1
+            end_minute = 30 if minute == 0 else 0
+            if end_hour == 24:
+                end_hour = 24  # Keep as 24:00 for midnight end
+
             schedule.append({
-                'time_range': f"{hour:02d}:{minute:02d} - {hour:02d}:{minute:02d}",
+                'time_range': f"{hour:02d}:{minute:02d} - {end_hour:02d}:{end_minute:02d}",
                 'status': 'off' if is_off else 'on'
             })
         return schedule

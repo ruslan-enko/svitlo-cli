@@ -79,6 +79,7 @@ class SvitloApp(App):
         self.current_group = DEFAULT_GROUP
         self.current_group_index = AVAILABLE_GROUPS.index(DEFAULT_GROUP)
         self.schedule_data = None
+        self.all_schedules = None
         self.updated = ""
         self.last_notification_minute = -1
         self.auto_refresh_enabled = True
@@ -141,13 +142,23 @@ class SvitloApp(App):
     async def _load_schedule(self) -> None:
         self.ui_manager.show_loading(True)
         try:
-            result = await self.fetcher.fetch_group_schedule(self.current_group)
+            result = await self.fetcher.fetch_schedules()
             if result['success']:
-                self.schedule_data = result['data']
+                self.all_schedules = result['data']
                 self.updated = result.get('updated', '')
-                self._update_ui(result['data'], self.updated)
+                
+                # Update current view
+                if self.current_group in self.all_schedules:
+                    self.schedule_data = self.all_schedules[self.current_group]
+                    self._update_ui(self.schedule_data, self.updated)
             else:
                 self.ui_manager.show_error(result.get('error', 'Unknown error'))
+                # If we have mock data in result, use it
+                if 'data' in result:
+                    self.all_schedules = result['data']
+                    if self.current_group in self.all_schedules:
+                        self.schedule_data = self.all_schedules[self.current_group]
+                        self._update_ui(self.schedule_data, self.updated)
         finally:
             self.ui_manager.show_loading(False)
 
@@ -192,7 +203,13 @@ class SvitloApp(App):
     def _handle_group_change(self, group: str) -> None:
         self.set_current_group(group)
         self.update_group_button_label()
-        self.run_worker(self._load_schedule())
+        
+        # If we have cached data, update UI immediately
+        if self.all_schedules and group in self.all_schedules:
+            self.schedule_data = self.all_schedules[group]
+            self._update_ui(self.schedule_data, self.updated)
+        else:
+            self.run_worker(self._load_schedule())
 
     def update_group_button_label(self) -> None:
         group_button = self.query_one(f"#{BTN_ID_GROUP_SELECT}", Button)

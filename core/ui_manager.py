@@ -129,7 +129,14 @@ class UIManager:
         for i in range(48):
             hour = i // 2
             minute = 30 if i % 2 == 1 else 0
-            time_str = f"{hour:02d}:{minute:02d} - {hour:02d}:{minute:02d}"
+            
+            # Calculate end time to match schedule key format
+            end_hour = hour if minute == 0 else hour + 1
+            end_minute = 30 if minute == 0 else 0
+            if end_hour == 24:
+                end_hour = 24
+                
+            time_str = f"{hour:02d}:{minute:02d} - {end_hour:02d}:{end_minute:02d}"
             status = schedule.get(time_str, 'on')
             is_current_time = not is_next_day and hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30))
 
@@ -166,7 +173,8 @@ class UIManager:
                 safe_widget_update(next_change_info, "")
             return
 
-        next_change, next_status, current_status = self._find_next_change(schedule, now)
+        next_day_schedule = schedule_data.get('next_day_schedule')
+        next_change, next_status, current_status = self._find_next_change(schedule, now, next_day_schedule)
         if next_change and next_status:
             delta = next_change - now
             total_seconds = max(0, int(delta.total_seconds()))
@@ -227,7 +235,7 @@ class UIManager:
                 return item['status'] == 'on'
         return True
 
-    def _find_next_change(self, schedule: list, now: datetime) -> tuple:
+    def _find_next_change(self, schedule: list, now: datetime, next_day_schedule: Optional[list] = None) -> tuple:
         now_time = now.hour * 60 + now.minute
         current_status = None
         next_change = None
@@ -252,14 +260,20 @@ class UIManager:
                     next_change = target_time
                     next_status = item['status']
 
-        if next_change is None and schedule:
-            for item in schedule:
+        if next_change is None:
+            # If next day schedule is available, use it
+            target_schedule = next_day_schedule if next_day_schedule else schedule
+            
+            for item in target_schedule:
                 time_range = item['time_range']
                 parts = time_range.split(' - ')
                 if len(parts) == 2:
                     start_str = parts[0].strip()
                     hour = int(start_str.split(':')[0])
                     minute = int(start_str.split(':')[1]) if ':' in start_str and len(start_str.split(':')) > 1 else 0
+                    
+                    # If we're using next day schedule, time is relative to midnight of next day
+                    # If we're wrapping current schedule, time is also effectively relative to next midnight for calculation
                     target_min = hour * 60 + minute + 24 * 60
                     diff = target_min - now_time
 
