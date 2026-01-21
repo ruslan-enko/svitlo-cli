@@ -3,9 +3,9 @@
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 import logging
+from threading import Timer
 
-from textual.containers import Container
-from textual.widgets import Static, Label, Select
+from textual.widgets import Static
 from core.config import (
     COLORS, NOTIFICATIONS, STATUS_TEXTS,
     STATUS_LIGHT_ON, STATUS_LIGHT_OFF,
@@ -13,9 +13,7 @@ from core.config import (
 )
 from core.utils import (
     safe_widget_update, safe_query, format_time_duration,
-    parse_time_to_minutes, format_off_ranges,
-    is_light_on, get_current_time_minutes,
-    time_range_contains, minutes_to_time_str
+    format_off_ranges, is_light_on
 )
 
 
@@ -157,12 +155,21 @@ class UIManager:
         if not schedule_data:
             return
         display_data = self.get_schedule_for_display(schedule_data)
-        schedule = display_data.get('schedule', [])
+        off_ranges = display_data.get('off_ranges', [])
         is_next_day = display_data.get('is_next_day', False)
         now = datetime.now()
         timer_display = safe_query("timer-display", Static, self.app)
         next_change_info = safe_query("next-change-info", Static, self.app)
 
+        if not off_ranges:
+            if is_next_day:
+                safe_widget_update(timer_display, STATUS_TEXTS['all_day_tomorrow'])
+            else:
+                safe_widget_update(timer_display, STATUS_TEXTS['all_day'])
+            safe_widget_update(next_change_info, "")
+            return
+
+        schedule = display_data.get('schedule', [])
         if is_next_day:
             first_off, first_on = self._find_first_outage_times(schedule)
             if first_off and first_on:
@@ -222,19 +229,6 @@ class UIManager:
 
         return first_off, first_on
 
-    def _check_current_light_status(self, schedule: list, now: datetime) -> bool:
-        now_min = now.hour * 60 + now.minute
-        for item in schedule:
-            time_range = item['time_range']
-            start_str, end_str = time_range.split(' - ')
-            start_hour, start_min = map(int, start_str.split(':'))
-            end_hour, end_min = map(int, end_str.split(':'))
-            start_min_total = start_hour * 60 + start_min
-            end_min_total = end_hour * 60 + end_min
-            if time_range_contains(now_min, start_min_total, end_min_total):
-                return item['status'] == 'on'
-        return True
-
     def _find_next_change(self, schedule: list, now: datetime, next_day_schedule: Optional[list] = None) -> tuple:
         now_time = now.hour * 60 + now.minute
         current_status = None
@@ -292,7 +286,6 @@ class UIManager:
         def clear_notification():
             safe_widget_update(notification_widget, "")
 
-        from threading import Timer
         timer = Timer(duration, clear_notification)
         timer.daemon = True
         timer.start()
@@ -300,6 +293,11 @@ class UIManager:
     def check_and_show_notifications(self, data: Dict[str, Any]) -> None:
         if not data:
             return
+        
+        off_ranges = data.get('off_ranges', [])
+        if not off_ranges:
+            return
+        
         now = datetime.now()
         current_status = data.get('current_status', 'unknown')
         schedule = data.get('schedule', [])

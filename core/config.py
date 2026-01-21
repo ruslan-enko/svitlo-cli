@@ -16,6 +16,12 @@ AVAILABLE_GROUPS = [
 ]
 DEFAULT_GROUP = "6.1"
 
+# Ukrainian month names
+MONTHS_UA = [
+    'Січня', 'Лютого', 'Березня', 'Квітня', 'Травня', 'Червня',
+    'Липня', 'Серпня', 'Вересня', 'Жовтня', 'Листопада', 'Грудня'
+]
+
 # Button ID prefixes (for consistent UI element naming)
 BTN_PREFIX_GROUP = "btn-group-"
 BTN_PREFIX_MODAL = "btn-modal-"
@@ -42,13 +48,17 @@ STATUS_LIGHT_OFF = "Світла немає"
 STATUS_LOADING = "Завантаження..."
 STATUS_UPDATING = "Оновлення..."
 STATUS_NO_MORE_CHANGES = "✓ Сьогодні більше змін немає"
+STATUS_ALL_DAY = "✓ Світло буде цілий день"
+STATUS_ALL_DAY_TOMORROW = "✓ Завтра світло буде цілий день"
 
 STATUS_TEXTS = {
     'light_on': STATUS_LIGHT_ON,
     'light_off': STATUS_LIGHT_OFF,
     'loading': STATUS_LOADING,
     'updating': STATUS_UPDATING,
-    'no_more_changes': STATUS_NO_MORE_CHANGES
+    'no_more_changes': STATUS_NO_MORE_CHANGES,
+    'all_day': STATUS_ALL_DAY,
+    'all_day_tomorrow': STATUS_ALL_DAY_TOMORROW
 }
 
 # Notifications

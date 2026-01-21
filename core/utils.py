@@ -155,11 +155,3 @@ def time_range_contains(current_minutes: int, start_minutes: int, end_minutes: i
         return start_minutes <= current_minutes < end_minutes
     else:
         return current_minutes >= start_minutes or current_minutes < end_minutes
-
-
-def calculate_duration_minutes(start_minutes: int, end_minutes: int) -> int:
-    """Calculate duration in minutes between two times (handles midnight crossing)"""
-    duration = end_minutes - start_minutes
-    if duration < 0:
-        duration += 24 * 60
-    return duration

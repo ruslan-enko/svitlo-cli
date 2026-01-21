@@ -29,7 +29,7 @@ from screens import GroupSelectionScreen, GroupSelectDialog
 from ui.popup_utils import make_button_label
 from core.utils import (
     setup_logging, handle_ui_errors,
-    parse_group_from_button_id, get_current_time_minutes
+    parse_group_from_button_id
 )
 from core.preferences import save_preferences, load_preferences, is_first_run, get_saved_group
 

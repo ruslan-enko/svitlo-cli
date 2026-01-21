@@ -10,7 +10,8 @@ except ImportError:
         return func
 
 
-from core.config import AVAILABLE_GROUPS
+from core.config import AVAILABLE_GROUPS, MONTHS_UA
+from core.utils import time_range_contains
 
 class ScheduleFetcher:
     """Handles fetching power outage schedule data from the website"""
@@ -110,7 +111,6 @@ class ScheduleFetcher:
             next_day_data = self._extract_next_day_schedule(full_page_text, target_group)
             
             # Calculate next event time
-            from datetime import datetime
             now = datetime.now()
             now_minutes = now.hour * 60 + now.minute
             
@@ -161,11 +161,7 @@ class ScheduleFetcher:
         if match:
             date_str = match.group(1)
             day, month, year = date_str.split('.')
-            months_ua = [
-                'Січня', 'Лютого', 'Березня', 'Квітня', 'Травня', 'Червня',
-                'Липня', 'Серпня', 'Вересня', 'Жовтня', 'Листопада', 'Грудня'
-            ]
-            month_name = months_ua[int(month) - 1]
+            month_name = MONTHS_UA[int(month) - 1]
             return f"{day} {month_name} {year}"
         return ""
     
@@ -194,11 +190,7 @@ class ScheduleFetcher:
         
         # Convert to Ukrainian format
         day, month, year = next_day_date_str.split('.')
-        months_ua = [
-            'Січня', 'Лютого', 'Березня', 'Квітня', 'Травня', 'Червня',
-            'Липня', 'Серпня', 'Вересня', 'Жовтня', 'Листопада', 'Грудня'
-        ]
-        month_name = months_ua[int(month) - 1]
+        month_name = MONTHS_UA[int(month) - 1]
         next_day_date = f"{day} {month_name} {year}"
         
         # Get text from second date header onwards
@@ -252,7 +244,11 @@ class ScheduleFetcher:
             time_point = (hour, minute)
 
             is_off = any(
-                self._is_time_in_range(time_point, r['start'], r['end'])
+                time_range_contains(
+                    time_point[0] * 60 + time_point[1],
+                    r['start'][0] * 60 + r['start'][1],
+                    r['end'][0] * 60 + r['end'][1]
+                )
                 for r in off_ranges
             )
 
@@ -267,25 +263,17 @@ class ScheduleFetcher:
             })
         return schedule
 
-    def _is_time_in_range(self, time: tuple, start: tuple, end: tuple) -> bool:
-        """Check if a specific time falls within a range"""
-        time_min = time[0] * 60 + time[1]
-        start_min = start[0] * 60 + start[1]
-        end_min = end[0] * 60 + end[1]
-
-        if start_min < end_min:
-            return start_min <= time_min < end_min
-        elif start_min > end_min:
-            return time_min >= start_min or time_min < end_min
-        return False
-
     def _get_current_status(self, off_ranges: List[Dict]) -> str:
         """Get current power status based on outage ranges"""
         now = datetime.now()
         current_time = (now.hour, now.minute)
 
         for off_range in off_ranges:
-            if self._is_time_in_range(current_time, off_range['start'], off_range['end']):
+            if time_range_contains(
+                current_time[0] * 60 + current_time[1],
+                off_range['start'][0] * 60 + off_range['start'][1],
+                off_range['end'][0] * 60 + off_range['end'][1]
+            ):
                 return 'Світла немає'
         return 'Світло є'
 
