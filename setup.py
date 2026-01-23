@@ -16,6 +16,7 @@ DEPENDENCIES = [
     "beautifulsoup4>=4.12.0",
     "lxml>=5.0.0",
     "playwright>=1.48.0",
+    "packaging>=21.0",
 ]
 
 setup(

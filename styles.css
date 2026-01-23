@@ -314,3 +314,18 @@ Label {
 .legend-hidden {
     display: none;
 }
+
+/* ============ UPDATE NOTIFICATION ============ */
+#update-notification {
+    text-style: bold;
+    text-align: left;
+    height: auto;
+    color: #888;
+    margin: 0;
+    margin-bottom: 1;
+}
+
+#update-notification.update-available {
+    color: #00a853;
+    text-style: bold;
+}
