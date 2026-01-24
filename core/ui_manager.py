@@ -161,7 +161,8 @@ class UIManager:
         timer_display = safe_query("timer-display", Static, self.app)
         next_change_info = safe_query("next-change-info", Static, self.app)
 
-        if not off_ranges:
+        # Check for all-day light scenario
+        if self._is_all_day_light(display_data):
             if is_next_day:
                 safe_widget_update(timer_display, STATUS_TEXTS['all_day_tomorrow'])
             else:
@@ -278,6 +279,21 @@ class UIManager:
                         next_status = item['status']
 
         return next_change, next_status, current_status
+
+    def _is_all_day_light(self, display_data: Dict[str, Any]) -> bool:
+        """Check if light is available all day"""
+        off_ranges = display_data.get('off_ranges', [])
+        current_status = display_data.get('current_status', '')
+        
+        # Check for explicit all-day indicators
+        if not off_ranges and 'є' in current_status.lower():
+            return True
+        
+        # Check timeline for all "on" status
+        schedule = display_data.get('schedule', [])
+        all_on = all(item.get('status') == 'on' for item in schedule)
+        
+        return not off_ranges and all_on
 
     def show_notification(self, message: str, duration: int = 10) -> None:
         notification_widget = safe_query("notification-display", Static, self.app)

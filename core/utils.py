@@ -87,7 +87,9 @@ def is_light_on(status_text: str) -> bool:
     status_lower = status_text.lower()
     if 'немає' in status_lower or ' немає' in status_lower:
         return False
-    return any(keyword in status_lower for keyword in ['світло', 'є', 'on'])
+    return any(keyword in status_lower for keyword in [
+        'світло', 'є', 'on', 'електроенергія є', 'електроенергії є'
+    ])
 
 
 def parse_time_to_minutes(time_str: str) -> int:
