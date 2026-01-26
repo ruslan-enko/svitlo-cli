@@ -8,6 +8,7 @@ APP_VERSION = "0.44"
 # File paths
 PREFERENCES_DIR = os.path.expanduser("~/.config/svitlo-cli")
 PREFERENCES_FILE = os.path.join(PREFERENCES_DIR, "preferences.json")
+DATA_FILE = os.path.join(PREFERENCES_DIR, "last_data.json")
 
 # Available groups
 AVAILABLE_GROUPS = [
@@ -29,7 +30,6 @@ BTN_PREFIX_ACTION = "btn-action-"
 BTN_ID_REFRESH = "action-refresh"
 BTN_ID_QUIT = "action-quit"
 BTN_ID_GROUP_SELECT = "btn-group-select"
-BTN_ID_UPDATE = "action-update"
 
 # Timeline settings
 TIMELINE_INTERVALS_PER_HOUR = 2
@@ -42,11 +42,6 @@ TIME_THRESHOLD_HOURS = 1
 TIME_THRESHOLD_MINUTES = 30
 NOTIFICATION_DURATION = 10
 NOTIFICATION_THRESHOLD = 30
-
-# GitHub update checker
-GITHUB_REPO = "ruslan-enko/svitlo-cli"
-GITHUB_API_URL = "https://api.github.com/repos/ruslan-enko/svitlo-cli/releases/latest"
-UPDATE_CHECK_INTERVAL = 3600  # Check for updates every hour (3600 seconds)
 
 # Status texts
 STATUS_LIGHT_ON = "Світло є"

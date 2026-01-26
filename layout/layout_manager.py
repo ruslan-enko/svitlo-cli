@@ -1,7 +1,5 @@
 """Layout manager for responsive UI adaptation"""
 
-__version__ = "0.44"
-
 from typing import Literal
 
 LayoutType = Literal['tiny', 'small', 'medium', 'large']
@@ -46,16 +44,6 @@ LAYOUT_CONFIGS = {
     }
 }
 
-TERMINAL_SIZE_WARNING = (
-    "⚠️ Вікно занадто мале для повного відображення.\n"
-    "Рекомендований мінімальний розмір: {min_width}x{min_height}\n"
-    "Поточний розмір: {current_width}x{current_height}\n"
-    "Деякий контент може бути приховано."
-)
-
-MIN_TERMINAL_WIDTH = BREAKPOINT_TINY
-MIN_TERMINAL_HEIGHT = 18
-
 
 class LayoutManager:
     """Centralized responsive layout management"""
@@ -74,41 +62,3 @@ class LayoutManager:
     def get_config(layout_type: LayoutType) -> dict:
         """Return configuration for layout type"""
         return LAYOUT_CONFIGS[layout_type]
-
-    @staticmethod
-    def calculate_grid_columns(terminal_width: int, item_count: int = 12) -> int:
-        """Calculate optimal columns for grid"""
-        layout = LayoutManager.get_layout_type(terminal_width, 24)
-        config = LayoutManager.get_config(layout)
-        cols = min(config['popup_columns'], item_count)
-        return max(1, cols)
-
-    @staticmethod
-    def get_button_text(layout_type: LayoutType) -> str:
-        """Return button text format for layout type"""
-        return LAYOUT_CONFIGS[layout_type]['button_text']
-
-    @staticmethod
-    def should_show_warning(terminal_width: int, terminal_height: int) -> bool:
-        """Whether to show terminal size warning"""
-        return terminal_width < BREAKPOINT_TINY
-
-    @staticmethod
-    def get_logo_rows(layout_type: LayoutType) -> int:
-        """Return number of rows for ASCII logo"""
-        return LAYOUT_CONFIGS[layout_type]['logo_rows']
-
-    @staticmethod
-    def get_timeline_columns(layout_type: LayoutType) -> int:
-        """Return number of columns for timeline"""
-        return LAYOUT_CONFIGS[layout_type]['timeline_columns']
-
-    @staticmethod
-    def format_warning(min_width: int, min_height: int, current_width: int, current_height: int) -> str:
-        """Format terminal size warning message"""
-        return TERMINAL_SIZE_WARNING.format(
-            min_width=min_width,
-            min_height=min_height,
-            current_width=current_width,
-            current_height=current_height
-        )

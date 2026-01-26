@@ -18,12 +18,11 @@ from typing import Optional
 
 from core.schedule_fetcher import ScheduleFetcher
 from core.ui_manager import UIManager
-from core.update_checker import UpdateChecker
 from core.config import (
     APP_NAME, APP_VERSION, COLORS, AVAILABLE_GROUPS, DEFAULT_GROUP,
     MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT,
-    BTN_PREFIX_GROUP, BTN_ID_REFRESH, BTN_ID_QUIT, BTN_ID_GROUP_SELECT, BTN_ID_UPDATE,
-    NOTIFICATION_DURATION, UPDATE_INTERVAL, DATA_REFRESH_INTERVAL, UPDATE_CHECK_INTERVAL
+    BTN_PREFIX_GROUP, BTN_ID_REFRESH, BTN_ID_QUIT, BTN_ID_GROUP_SELECT,
+    NOTIFICATION_DURATION, UPDATE_INTERVAL, DATA_REFRESH_INTERVAL
 )
 from layout.layout_manager import LayoutManager, LayoutType
 from screens import GroupSelectionScreen, GroupSelectDialog
@@ -77,7 +76,6 @@ class SvitloApp(App):
         super().__init__()
         self.fetcher = ScheduleFetcher()
         self.ui_manager = UIManager(self)
-        self.update_checker = UpdateChecker()
         self.current_group = DEFAULT_GROUP
         self.current_group_index = AVAILABLE_GROUPS.index(DEFAULT_GROUP)
         self.schedule_data = None
@@ -85,7 +83,6 @@ class SvitloApp(App):
         self.updated = ""
         self.last_notification_minute = -1
         self.auto_refresh_enabled = True
-        self.update_available = False
         self.logger = logging.getLogger(__name__)
 
     def compose(self) -> ComposeResult:
@@ -105,24 +102,20 @@ class SvitloApp(App):
                     yield Static("", id="notification-display")
                     yield Static("", id="off-schedule-text")
                     yield Static("", id="loading-indicator")
-                    yield Static("", id="update-notification")
-
+ 
             with Container(id="actions-container"):
                 yield Button(make_button_label(f"Група {DEFAULT_GROUP}"), id=BTN_ID_GROUP_SELECT)
                 yield Button(make_button_label("Оновити"), id=BTN_ID_REFRESH)
-                yield Button(make_button_label("Оновлення"), id=BTN_ID_UPDATE)
                 yield Button(make_button_label("Вихід"), id=BTN_ID_QUIT)
 
         self.set_interval(UPDATE_INTERVAL, self.update_timer)
         self.set_interval(DATA_REFRESH_INTERVAL, self._do_auto_refresh)
-        self.set_interval(UPDATE_CHECK_INTERVAL, self._check_for_updates)
 
     @handle_ui_errors
     async def on_mount(self) -> None:
         await self._init_group()
         self.update_group_button_label()
         self.run_worker(self._load_schedule())
-        self.run_worker(self._check_for_updates())
 
     async def _init_group(self) -> None:
         group = None
@@ -160,7 +153,7 @@ class SvitloApp(App):
                     self._update_ui(self.schedule_data, self.updated)
             else:
                 self.ui_manager.show_error(result.get('error', 'Unknown error'))
-                # If we have mock data in result, use it
+                # If we have saved data in result, use it
                 if 'data' in result:
                     self.all_schedules = result['data']
                     if self.current_group in self.all_schedules:
@@ -202,8 +195,6 @@ class SvitloApp(App):
             self.exit()
         elif button_id == BTN_ID_GROUP_SELECT:
             self.push_screen(GroupSelectDialog())
-        elif button_id == BTN_ID_UPDATE:
-            self._action_update()
         elif button_id.startswith(BTN_PREFIX_GROUP):
             group = parse_group_from_button_id(button_id)
             if group:
@@ -227,98 +218,7 @@ class SvitloApp(App):
     def _action_refresh(self) -> None:
         self.run_worker(self._load_schedule())
 
-    async def _check_for_updates(self) -> None:
-        """Check for application updates in the background"""
-        try:
-            result = await self.update_checker.check_for_updates()
-            
-            if result['success'] and result.get('update_available'):
-                self.update_available = True
-                latest_version = result.get('latest_version', 'unknown')
-                self._show_update_available(latest_version)
-            else:
-                self.update_available = False
-                self._hide_update_button()
-                
-        except Exception as e:
-            self.logger.error(f"Error checking for updates: {e}")
-            self._hide_update_button()
-
-    def _show_update_available(self, version: str) -> None:
-        """Show notification that update is available"""
-        try:
-            # Show notification banner
-            update_notification = self.query_one("#update-notification", Static)
-            if update_notification:
-                update_notification.update(f"📦 Доступне оновлення: v{version}")
-                update_notification.add_class("update-available")
-            
-            # Enable update button
-            update_button = self.query_one(f"#{BTN_ID_UPDATE}", Button)
-            if update_button:
-                update_button.disabled = False
-                update_button.label = make_button_label(f"Оновити на v{version}")
-                
-            self.logger.info(f"Update available: v{version}")
-        except Exception as e:
-            self.logger.error(f"Error showing update notification: {e}")
-
-    def _hide_update_button(self) -> None:
-        """Hide the update button when no update is available"""
-        try:
-            update_button = self.query_one(f"#{BTN_ID_UPDATE}", Button)
-            if update_button:
-                update_button.disabled = True
-                update_button.label = make_button_label("Оновлення")
-            
-            update_notification = self.query_one("#update-notification", Static)
-            if update_notification:
-                update_notification.update("")
-                if "update-available" in update_notification.classes:
-                    update_notification.remove_class("update-available")
-        except Exception as e:
-            self.logger.debug(f"Error hiding update button: {e}")
-
-    def _action_update(self) -> None:
-        """Handle update button press"""
-        if self.update_available:
-            self.run_worker(self._perform_update())
-
-    async def _perform_update(self) -> None:
-        """Perform the application update"""
-        try:
-            update_notification = self.query_one("#update-notification", Static)
-            if update_notification:
-                update_notification.update("⏳ Оновлення в процесі...")
-            
-            update_button = self.query_one(f"#{BTN_ID_UPDATE}", Button)
-            if update_button:
-                update_button.disabled = True
-                update_button.label = make_button_label("⏳ Оновлення...")
-            
-            result = await self.update_checker.perform_update()
-            
-            if result['success']:
-                if update_notification:
-                    update_notification.update(f"✓ {result['message']}")
-                if update_button:
-                    update_button.label = make_button_label("Перезавантажити")
-                self.logger.info("Update completed successfully")
-            else:
-                if update_notification:
-                    update_notification.update(f"✗ {result['message']}")
-                if update_button:
-                    update_button.disabled = False
-                    update_button.label = make_button_label("Спробувати знову")
-                self.logger.error(f"Update failed: {result['message']}")
-                
-        except Exception as e:
-            self.logger.error(f"Error during update: {e}")
-            update_notification = self.query_one("#update-notification", Static)
-            if update_notification:
-                update_notification.update(f"✗ Помилка при оновленні: {str(e)}")
-
-
+    def action_toggle_day(self) -> None:
         self.ui_manager.toggle_day()
         if self.schedule_data:
             self._update_ui(self.schedule_data, self.updated)

@@ -40,16 +40,15 @@ class UIManager:
 
     def update_status_display(self, data: Dict[str, Any]) -> None:
         status = data.get('current_status', 'unknown')
-        data_source = "REAL" if not data.get('is_mock') else "MOCK"
         timer_display = safe_query("timer-display", Static, self.app)
 
         if is_light_on(status):
-            safe_widget_update(timer_display, f"█ {status} ({data_source})")
+            safe_widget_update(timer_display, f"█ {status}")
             if timer_display:
                 timer_display.remove_class("status-indicator-off")
                 timer_display.add_class("status-indicator-on")
         else:
-            safe_widget_update(timer_display, f"□ {status} ({data_source})")
+            safe_widget_update(timer_display, f"□ {status}")
             if timer_display:
                 timer_display.remove_class("status-indicator-on")
                 timer_display.add_class("status-indicator-off")
@@ -81,9 +80,6 @@ class UIManager:
             else:
                 safe_widget_update(date_widget, f"Дата: {schedule_date}")
 
-    def update_group_display(self, group: str) -> None:
-        group_display = safe_query("current-group-display", Static, self.app)
-        safe_widget_update(group_display, f"Поточна група: {group}")
 
     def toggle_day(self) -> bool:
         self.showing_next_day = not self.showing_next_day

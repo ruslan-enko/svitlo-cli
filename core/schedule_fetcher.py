@@ -12,6 +12,7 @@ except ImportError:
 
 from core.config import AVAILABLE_GROUPS, MONTHS_UA
 from core.utils import time_range_contains
+from core.data_manager import save_last_data, load_last_data
 
 class ScheduleFetcher:
     """Handles fetching power outage schedule data from the website"""
@@ -58,11 +59,16 @@ class ScheduleFetcher:
                 
                 self.logger.info("Successfully fetched schedules for all groups")
 
-                return {
+                result = {
                     'success': True,
                     'data': schedules,
                     'updated': datetime.now().isoformat()
                 }
+                
+                # Save to persistent storage
+                save_last_data(result)
+                
+                return result
                 
             except Exception as e:
                 self.logger.error(f"Playwright error: {e}")
@@ -71,17 +77,22 @@ class ScheduleFetcher:
         except Exception as e:
             self.logger.error(f"Failed to fetch schedules: {e}")
             
-            # Generate mock data for all groups
-            mock_schedules = {}
-            for group in AVAILABLE_GROUPS:
-                mock_data = self._get_mock_schedule(group)
-                mock_data['is_mock'] = True
-                mock_schedules[group] = mock_data
+            # Try to load last saved data
+            last_data = load_last_data()
+            if last_data:
+                self.logger.info("Loaded last saved data from storage")
+                return {
+                    'success': False,
+                    'is_stale': True,
+                    'data': last_data.get('data', {}),
+                    'updated': last_data.get('updated', ''),
+                    'error': f"Помилка завантаження. Використовуємо збережені дані: {str(e)}"
+                }
                 
             return {
                 'success': False,
-                'error': str(e),
-                'data': mock_schedules
+                'error': f"Помилка завантаження і немає збережених даних: {str(e)}",
+                'data': {}
             }
 
     def _parse_main_page(self, html: str, target_group: str) -> Dict:
@@ -132,7 +143,6 @@ class ScheduleFetcher:
                 'schedule': schedule,
                 'current_status': current_status,
                 'next_event': next_event_text,
-                'is_mock': False,
                 'schedule_date': schedule_date,
                 'update_time': update_time,
                 'off_ranges': off_ranges
@@ -150,10 +160,7 @@ class ScheduleFetcher:
 
             return result
 
-        mock_data = self._get_mock_schedule(target_group)
-        mock_data['is_mock'] = True
-        mock_data['schedule_date'] = schedule_date
-        return mock_data
+        return None
 
     def _extract_schedule_date(self, text: str) -> str:
         """Extract schedule date from text content"""
@@ -277,31 +284,4 @@ class ScheduleFetcher:
                 return 'Світла немає'
         return 'Світло є'
 
-    def _get_mock_schedule(self, group: str) -> Dict:
-        """Generate mock schedule data for testing/fallback purposes"""
-        mock_data = {
-            '1.1': '00:00 до 02:00, з 05:30 до 09:00, з 12:30 до 16:00, з 23:00 до 24:00',
-            '1.2': '02:00 до 05:30, з 09:00 до 11:30, з 16:00 до 19:30',
-            '2.1': '02:00 до 05:30, з 09:00 до 12:30, з 16:00 до 18:00',
-            '2.2': '05:30 до 09:00, з 12:30 до 16:00, з 19:30 до 23:00',
-            '3.1': '05:30 до 09:00, з 12:30 до 16:00, з 19:30 до 23:00',
-            '3.2': '00:00 до 02:00, з 09:00 до 12:30, з 16:00 до 20:00',
-            '4.1': '08:00 до 12:30, з 16:00 до 19:30, з 23:00 до 24:00',
-            '4.2': '00:00 до 02:00, з 09:00 до 12:30, з 16:00 до 19:30, з 23:00 до 24:00',
-            '5.1': '02:00 до 05:30, з 15:00 до 17:30, з 19:30 до 23:00',
-            '5.2': '06:00 до 09:00, з 12:30 до 16:00, з 19:30 до 23:00',
-            '6.1': '00:00 до 02:30, з 09:30 до 13:00, з 16:30 до 20:00',
-            '6.2': '02:00 до 05:30, з 09:00 до 12:30, з 16:00 до 19:30',
-        }
-
-        time_ranges = mock_data.get(group, '')
-        off_ranges = self._parse_time_ranges(time_ranges)
-        schedule = self._build_schedule_from_ranges(off_ranges)
-        current_status = self._get_current_status(off_ranges)
-
-        return {
-            'schedule': schedule,
-            'current_status': current_status,
-            'next_event': 'Немає запланованих змін',
-            'off_ranges': off_ranges
-        }
+        return None
