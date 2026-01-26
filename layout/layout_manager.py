@@ -4,28 +4,10 @@ from typing import Literal
 
 LayoutType = Literal['tiny', 'small', 'medium', 'large']
 
-BREAKPOINT_TINY = 60
-BREAKPOINT_SMALL = 80
-BREAKPOINT_MEDIUM = 120
-BREAKPOINT_LARGE = 160
+BREAKPOINT_MEDIUM = 80
+BREAKPOINT_LARGE = 120
 
 LAYOUT_CONFIGS = {
-    'tiny': {
-        'logo_rows': 1,
-        'timeline_columns': 1,
-        'popup_columns': 1,
-        'show_legend': False,
-        'timeline_compressed': True,
-        'button_text': '[{group}]',
-    },
-    'small': {
-        'logo_rows': 2,
-        'timeline_columns': 1,
-        'popup_columns': 2,
-        'show_legend': False,
-        'timeline_compressed': True,
-        'button_text': '[{group}]',
-    },
     'medium': {
         'logo_rows': 4,
         'timeline_columns': 2,
@@ -51,9 +33,7 @@ class LayoutManager:
     @staticmethod
     def get_layout_type(terminal_width: int, terminal_height: int) -> LayoutType:
         """Determine layout type based on terminal size"""
-        if terminal_width < BREAKPOINT_SMALL:
-            return 'tiny' if terminal_width < BREAKPOINT_TINY else 'small'
-        elif terminal_width < BREAKPOINT_MEDIUM:
+        if terminal_width < BREAKPOINT_LARGE:
             return 'medium'
         else:
             return 'large'
@@ -61,4 +41,4 @@ class LayoutManager:
     @staticmethod
     def get_config(layout_type: LayoutType) -> dict:
         """Return configuration for layout type"""
-        return LAYOUT_CONFIGS[layout_type]
+        return LAYOUT_CONFIGS.get(layout_type, LAYOUT_CONFIGS['medium'])

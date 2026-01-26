@@ -1,10 +1,15 @@
 """Main application module for Svitlo CLI"""
 
 import warnings
+# Suppress urllib3 NotOpenSSLWarning (common on macOS with LibreSSL)
+warnings.filterwarnings("ignore", message=".*NotOpenSSLWarning.*")
+warnings.filterwarnings("ignore", message=".*urllib3 v2 only supports OpenSSL 1.1.1+.*")
+
 try:
+    # Try to suppress by category as well if urllib3 is available
     from urllib3.exceptions import NotOpenSSLWarning
     warnings.filterwarnings('ignore', category=NotOpenSSLWarning)
-except ImportError:
+except Exception:
     pass
 
 from textual.app import App, ComposeResult
@@ -20,7 +25,6 @@ from core.schedule_fetcher import ScheduleFetcher
 from core.ui_manager import UIManager
 from core.config import (
     APP_NAME, APP_VERSION, COLORS, AVAILABLE_GROUPS, DEFAULT_GROUP,
-    MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT,
     BTN_PREFIX_GROUP, BTN_ID_REFRESH, BTN_ID_QUIT, BTN_ID_GROUP_SELECT,
     NOTIFICATION_DURATION, UPDATE_INTERVAL, DATA_REFRESH_INTERVAL
 )

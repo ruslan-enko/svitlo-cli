@@ -273,43 +273,6 @@ Label {
     grid-columns: 1fr 1fr 1fr;
 }
 
-/* ============ TERMINAL SIZE MODAL ============ */
-.size-modal {
-    width: 50;
-    height: auto;
-    border: solid #D96800;
-    background: #1a1a1a;
-    padding: 2;
-}
-
-.size-title {
-    text-style: bold;
-    color: #D96800;
-    text-align: center;
-    margin-bottom: 1;
-}
-
-.size-info {
-    color: #888;
-    margin-bottom: 1;
-}
-
-.size-value {
-    text-style: bold;
-    color: #fff;
-    margin-bottom: 1;
-}
-
-.size-actions {
-    margin-top: 2;
-    text-align: center;
-}
-
-.size-hint {
-    color: #666;
-    text-align: center;
-}
-
 /* ============ LEGEND HIDING ============ */
 .legend-hidden {
     display: none;

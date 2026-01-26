@@ -3,7 +3,7 @@
 import os
 
 APP_NAME = "Svitlo CLI"
-APP_VERSION = "0.44"
+APP_VERSION = "1.0.0"
 
 # File paths
 PREFERENCES_DIR = os.path.expanduser("~/.config/svitlo-cli")
@@ -77,54 +77,6 @@ NOTIFICATIONS = {
 FIRST_RUN_TITLE = "Ласкаво просимо до Svitlo CLI"
 FIRST_RUN_MESSAGE = "Оберіть вашу групу для моніторингу графіку відключень:"
 
-# Layout breakpoints
-BREAKPOINT_TINY = 60
-BREAKPOINT_SMALL = 80
-BREAKPOINT_MEDIUM = 120
-BREAKPOINT_LARGE = 160
-
-MIN_TERMINAL_WIDTH = BREAKPOINT_TINY
-MIN_TERMINAL_HEIGHT = 18
-
-LAYOUT_CONFIGS = {
-    'tiny': {
-        'logo_rows': 1,
-        'timeline_columns': 1,
-        'popup_columns': 1,
-        'button_min_width': 16,
-        'show_legend': False,
-        'timeline_compressed': True,
-        'button_text': '[{group}]',
-    },
-    'small': {
-        'logo_rows': 2,
-        'timeline_columns': 1,
-        'popup_columns': 2,
-        'button_min_width': 18,
-        'show_legend': False,
-        'timeline_compressed': True,
-        'button_text': '[{group}]',
-    },
-    'medium': {
-        'logo_rows': 4,
-        'timeline_columns': 2,
-        'popup_columns': 2,
-        'button_min_width': 20,
-        'show_legend': True,
-        'timeline_compressed': False,
-        'button_text': '[ Гр. {group} ]',
-    },
-    'large': {
-        'logo_rows': 4,
-        'timeline_columns': 3,
-        'popup_columns': 3,
-        'button_min_width': 24,
-        'show_legend': True,
-        'timeline_compressed': False,
-        'button_text': '[ Гр. {group} ]',
-    }
-}
-
 # Colors
 COLORS = {
     'background': '#1a1a1a',
@@ -138,10 +90,3 @@ COLORS = {
     'border_light': '#222',
     'current': '#fff'
 }
-
-TERMINAL_SIZE_WARNING = (
-    "⚠️ Вікно занадто мале для повного відображення.\n"
-    "Рекомендований мінімальний розмір: {min_width}x{min_height}\n"
-    "Поточний розмір: {current_width}x{current_height}\n"
-    "Деякий контент може бути приховано."
-)
