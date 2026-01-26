@@ -1,5 +1,4 @@
 # Svitlo CLI
-
 Terminal app for monitoring power outage schedules in Lviv.
 
 ## Install
@@ -19,9 +18,6 @@ svitlo-cli
 
 - `t` - Switch between today/tomorrow
 - `r` - Refresh data
-- `↑/↓` - Scroll up/down
-- `PgUp/PgDn` - Page up/down
-- `Home/End` - Jump to top/bottom
 - `q` - Exit
 
 ## Features
@@ -30,5 +26,3 @@ svitlo-cli
 - Timer to next change
 - Support for all groups (1.1-6.2)
 - Next day schedule (when available)
-
-AI Coded Project
