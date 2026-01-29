@@ -143,6 +143,41 @@ class SvitloApp(App):
         legend = self.query_one("#timeline-legend")
         legend.display = config['show_legend']
 
+    def _create_all_day_light_schedule(self) -> dict:
+        """Create a default schedule indicating light is available all day"""
+        now = datetime.now()
+        
+        # Create 48 time slots (30 min intervals) all with status 'on'
+        schedule = []
+        for i in range(48):
+            hour = i // 2
+            minute = 0 if i % 2 == 0 else 30
+            end_hour = hour if minute == 0 else hour + 1
+            end_minute = 30 if minute == 0 else 0
+            if end_hour == 24:
+                end_hour = 24
+                
+            schedule.append({
+                'time_range': f"{hour:02d}:{minute:02d} - {end_hour:02d}:{end_minute:02d}",
+                'status': 'on'
+            })
+
+        from core.config import MONTHS_UA
+        day = now.day
+        month = now.month
+        month_name = MONTHS_UA[month - 1]
+        date_str = f"{day} {month_name} {now.year}"
+        
+        return {
+            'schedule': schedule,
+            'current_status': 'Світло є',
+            'next_event': 'Немає запланованих змін',
+            'schedule_date': date_str,
+            'update_time': now.strftime("%H:%M %d.%m.%Y"),
+            'off_ranges': [],
+            'has_next_day': False
+        }
+
     async def _load_schedule(self) -> None:
         self.ui_manager.show_loading(True)
         try:
@@ -154,6 +189,8 @@ class SvitloApp(App):
                 # Update current view
                 if self.current_group in self.all_schedules:
                     self.schedule_data = self.all_schedules[self.current_group]
+                    if not self.schedule_data:
+                        self.schedule_data = self._create_all_day_light_schedule()
                     self._update_ui(self.schedule_data, self.updated)
             else:
                 self.ui_manager.show_error(result.get('error', 'Unknown error'))
@@ -162,6 +199,8 @@ class SvitloApp(App):
                     self.all_schedules = result['data']
                     if self.current_group in self.all_schedules:
                         self.schedule_data = self.all_schedules[self.current_group]
+                        if not self.schedule_data:
+                            self.schedule_data = self._create_all_day_light_schedule()
                         self._update_ui(self.schedule_data, self.updated)
         finally:
             self.ui_manager.show_loading(False)
@@ -211,6 +250,8 @@ class SvitloApp(App):
         # If we have cached data, update UI immediately
         if self.all_schedules and group in self.all_schedules:
             self.schedule_data = self.all_schedules[group]
+            if not self.schedule_data:
+                self.schedule_data = self._create_all_day_light_schedule()
             self._update_ui(self.schedule_data, self.updated)
         else:
             self.run_worker(self._load_schedule())
