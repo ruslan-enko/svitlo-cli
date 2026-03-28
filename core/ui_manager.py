@@ -75,10 +75,12 @@ class UIManager:
         if schedule_date:
             date_widget = safe_query("timeline-date", Static, self.app)
             next_day_indicator = self.get_next_day_indicator(data)
+            now = datetime.now()
+            current_time = now.strftime("%H:%M")
             if next_day_indicator:
-                safe_widget_update(date_widget, f"Дата: {schedule_date} | {next_day_indicator}")
+                safe_widget_update(date_widget, f"Дата: {schedule_date} {current_time} | {next_day_indicator}")
             else:
-                safe_widget_update(date_widget, f"Дата: {schedule_date}")
+                safe_widget_update(date_widget, f"Дата: {schedule_date} {current_time}")
 
 
     def toggle_day(self) -> bool:
@@ -150,6 +152,7 @@ class UIManager:
     def update_timer(self, schedule_data: Optional[Dict[str, Any]]) -> None:
         if not schedule_data:
             return
+        self.update_date_display(schedule_data)
         display_data = self.get_schedule_for_display(schedule_data)
         off_ranges = display_data.get('off_ranges', [])
         is_next_day = display_data.get('is_next_day', False)

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import re
 import logging
@@ -102,65 +102,88 @@ class ScheduleFetcher:
 
         text_div = soup.select_one('.power-off__text')
         full_text = text_div.get_text() if text_div else soup.get_text()
-        
-        # Get full page text for next day parsing (second schedule is in different div)
         full_page_text = soup.get_text()
-
-        schedule_date = self._extract_schedule_date(full_text)
+        
         update_time = self._extract_update_time(full_text)
         
-        pattern = rf'Група\s+{re.escape(target_group)}\.\s*Електроенергії\s*немає\s*з\s*([^\.]+)\.'
-        match = re.search(pattern, full_text)
-
-        if match:
-            time_ranges = match.group(1).strip()
-            off_ranges = self._parse_time_ranges(time_ranges)
-            schedule = self._build_schedule_from_ranges(off_ranges)
-            current_status = self._get_current_status(off_ranges)
+        now = datetime.now()
+        today_date = now.strftime('%d.%m.%Y')
+        tomorrow = now + timedelta(days=1)
+        tomorrow_date = tomorrow.strftime('%d.%m.%Y')
+        
+        from core.config import MONTHS_UA
+        today_formatted = f"{now.day} {MONTHS_UA[now.month - 1]} {now.year}"
+        
+        # Default initialization for today (no outages)
+        result = {
+            'schedule': self._build_schedule_from_ranges([]),
+            'current_status': 'Світло є',
+            'next_event': 'Немає запланованих змін',
+            'schedule_date': today_formatted,
+            'update_time': update_time,
+            'off_ranges': [],
+            'has_next_day': False
+        }
+        
+        date_pattern = r'Графік\s+погодинних\s+відключень\s+на\s+(\d{2}\.\d{2}\.\d{4})'
+        matches = list(re.finditer(date_pattern, full_page_text))
+        
+        for i, match in enumerate(matches):
+            date_str = match.group(1)
             
-            # Try to extract next day schedule using full page text
-            next_day_data = self._extract_next_day_schedule(full_page_text, target_group)
+            start_idx = match.end()
+            end_idx = matches[i+1].start() if i + 1 < len(matches) else len(full_page_text)
+            section_text = full_page_text[start_idx:end_idx]
             
-            # Calculate next event time
-            now = datetime.now()
-            now_minutes = now.hour * 60 + now.minute
+            group_pattern = rf'Група\s+{re.escape(target_group)}\.\s*Електроенергії\s*немає\s*з\s*([^\.]+)\.'
+            group_match = re.search(group_pattern, section_text)
             
-            next_event_text = 'Немає запланованих змін'
-            for off_range in off_ranges:
-                start_min = off_range['start'][0] * 60 + off_range['start'][1]
-                end_min = off_range['end'][0] * 60 + off_range['end'][1]
+            off_ranges = []
+            if group_match:
+                time_ranges = group_match.group(1).strip()
+                off_ranges = self._parse_time_ranges(time_ranges)
                 
-                if start_min > now_minutes:
-                    # Next outage will start
-                    next_event_text = f"Наступне відключення о {off_range['start'][0]:02d}:{off_range['start'][1]:02d}"
-                    break
-                elif start_min <= now_minutes < end_min:
-                    # Currently in outage, next event is when light comes back
-                    next_event_text = f"Світло з'явиться о {off_range['end'][0]:02d}:{off_range['end'][1]:02d}"
-                    break
+            schedule = self._build_schedule_from_ranges(off_ranges)
             
-            result = {
-                'schedule': schedule,
-                'current_status': current_status,
-                'next_event': next_event_text,
-                'schedule_date': schedule_date,
-                'update_time': update_time,
-                'off_ranges': off_ranges
-            }
+            try:
+                day, month, year = date_str.split('.')
+                formatted_date = f"{int(day)} {MONTHS_UA[int(month) - 1]} {year}"
+            except ValueError:
+                formatted_date = date_str
             
-            # Add next day schedule if available
-            if next_day_data:
-                result['next_day_schedule'] = next_day_data['schedule']
-                result['next_day_date'] = next_day_data['schedule_date']
-                result['next_day_event'] = next_day_data.get('next_event', '')
-                result['next_day_off_ranges'] = next_day_data.get('off_ranges', [])
+            if date_str == today_date:
+                result['schedule'] = schedule
+                result['schedule_date'] = formatted_date
+                result['off_ranges'] = off_ranges
+                result['current_status'] = self._get_current_status(off_ranges)
+                
+                now_minutes = now.hour * 60 + now.minute
+                next_event_text = 'Немає запланованих змін'
+                for off_range in off_ranges:
+                    start_min = off_range['start'][0] * 60 + off_range['start'][1]
+                    end_min = off_range['end'][0] * 60 + off_range['end'][1]
+                    
+                    if start_min > now_minutes:
+                        next_event_text = f"Наступне відключення о {off_range['start'][0]:02d}:{off_range['start'][1]:02d}"
+                        break
+                    elif start_min <= now_minutes < end_min:
+                        next_event_text = f"Світло з'явиться о {off_range['end'][0]:02d}:{off_range['end'][1]:02d}"
+                        break
+                result['next_event'] = next_event_text
+                
+            elif date_str == tomorrow_date:
                 result['has_next_day'] = True
-            else:
-                result['has_next_day'] = False
+                result['next_day_schedule'] = schedule
+                result['next_day_date'] = formatted_date
+                result['next_day_off_ranges'] = off_ranges
+                
+                if off_ranges:
+                    first_out = off_ranges[0]
+                    result['next_day_event'] = f"Перше відключення о {first_out['start'][0]:02d}:{first_out['start'][1]:02d}"
+                else:
+                    result['next_day_event'] = 'Немає запланованих змін'
 
-            return result
-
-        return None
+        return result
 
     def _extract_schedule_date(self, text: str) -> str:
         """Extract schedule date from text content"""
