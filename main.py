@@ -1,17 +1,5 @@
 """Main application module for Svitlo CLI"""
 
-import warnings
-# Suppress urllib3 NotOpenSSLWarning (common on macOS with LibreSSL)
-warnings.filterwarnings("ignore", message=".*NotOpenSSLWarning.*")
-warnings.filterwarnings("ignore", message=".*urllib3 v2 only supports OpenSSL 1.1.1+.*")
-
-try:
-    # Try to suppress by category as well if urllib3 is available
-    from urllib3.exceptions import NotOpenSSLWarning
-    warnings.filterwarnings('ignore', category=NotOpenSSLWarning)
-except Exception:
-    pass
-
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, Container
 from textual.widgets import Static, Label, Button
@@ -19,14 +7,15 @@ from textual.events import Resize
 from datetime import datetime
 import logging
 import os
+import warnings
 from typing import Optional
 
 from core.schedule_fetcher import ScheduleFetcher
 from core.ui_manager import UIManager
 from core.config import (
-    APP_NAME, APP_VERSION, COLORS, AVAILABLE_GROUPS, DEFAULT_GROUP,
+    APP_NAME, APP_VERSION, AVAILABLE_GROUPS, DEFAULT_GROUP,
     BTN_PREFIX_GROUP, BTN_ID_REFRESH, BTN_ID_QUIT, BTN_ID_GROUP_SELECT,
-    NOTIFICATION_DURATION, UPDATE_INTERVAL, DATA_REFRESH_INTERVAL
+    UPDATE_INTERVAL, DATA_REFRESH_INTERVAL
 )
 from layout.layout_manager import LayoutManager, LayoutType
 from screens import GroupSelectionScreen, GroupSelectDialog
@@ -35,7 +24,18 @@ from core.utils import (
     setup_logging, handle_ui_errors,
     parse_group_from_button_id
 )
-from core.preferences import save_preferences, load_preferences, is_first_run, get_saved_group
+from core.preferences import save_preferences, is_first_run, get_saved_group
+
+
+def configure_warnings() -> None:
+    """Suppress common SSL-related warnings on macOS environments."""
+    warnings.filterwarnings("ignore", message=".*NotOpenSSLWarning.*")
+    warnings.filterwarnings("ignore", message=".*urllib3 v2 only supports OpenSSL 1.1.1+.*")
+    try:
+        from urllib3.exceptions import NotOpenSSLWarning
+        warnings.filterwarnings("ignore", category=NotOpenSSLWarning)
+    except Exception:
+        pass
 
 
 def load_css() -> str:
@@ -185,25 +185,27 @@ class SvitloApp(App):
             if result['success']:
                 self.all_schedules = result['data']
                 self.updated = result.get('updated', '')
-                
-                # Update current view
-                if self.current_group in self.all_schedules:
-                    self.schedule_data = self.all_schedules[self.current_group]
-                    if not self.schedule_data:
-                        self.schedule_data = self._create_all_day_light_schedule()
-                    self._update_ui(self.schedule_data, self.updated)
+
+                self._apply_group_schedule_from_cache(self.current_group)
             else:
                 self.ui_manager.show_error(result.get('error', 'Unknown error'))
                 # If we have saved data in result, use it
                 if 'data' in result:
                     self.all_schedules = result['data']
-                    if self.current_group in self.all_schedules:
-                        self.schedule_data = self.all_schedules[self.current_group]
-                        if not self.schedule_data:
-                            self.schedule_data = self._create_all_day_light_schedule()
-                        self._update_ui(self.schedule_data, self.updated)
+                    self._apply_group_schedule_from_cache(self.current_group)
         finally:
             self.ui_manager.show_loading(False)
+
+    def _apply_group_schedule_from_cache(self, group: str) -> bool:
+        """Apply schedule for a group from already loaded cache."""
+        if not self.all_schedules or group not in self.all_schedules:
+            return False
+
+        self.schedule_data = self.all_schedules[group]
+        if not self.schedule_data:
+            self.schedule_data = self._create_all_day_light_schedule()
+        self._update_ui(self.schedule_data, self.updated)
+        return True
 
     def _update_ui(self, data: dict, updated: str) -> None:
         self.ui_manager.update_status_display(data)
@@ -246,14 +248,9 @@ class SvitloApp(App):
     def _handle_group_change(self, group: str) -> None:
         self.set_current_group(group)
         self.update_group_button_label()
-        
+
         # If we have cached data, update UI immediately
-        if self.all_schedules and group in self.all_schedules:
-            self.schedule_data = self.all_schedules[group]
-            if not self.schedule_data:
-                self.schedule_data = self._create_all_day_light_schedule()
-            self._update_ui(self.schedule_data, self.updated)
-        else:
+        if not self._apply_group_schedule_from_cache(group):
             self.run_worker(self._load_schedule())
 
     def update_group_button_label(self) -> None:
@@ -273,6 +270,7 @@ class SvitloApp(App):
 
 
 def main() -> None:
+    configure_warnings()
     setup_logging()
     app = SvitloApp()
     app.run()

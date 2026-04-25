@@ -7,8 +7,7 @@ from threading import Timer
 
 from textual.widgets import Static
 from core.config import (
-    COLORS, NOTIFICATIONS, STATUS_TEXTS,
-    STATUS_LIGHT_ON, STATUS_LIGHT_OFF,
+    NOTIFICATIONS, STATUS_TEXTS,
     NOTIFICATION_THRESHOLD
 )
 from core.utils import (
@@ -138,10 +137,10 @@ class UIManager:
 
             if status == 'off':
                 off_count += 1
-                timeline_symbols.append(f"[#D96800]*[/#D96800]" if is_current_time else "[#666]□[/#666]")
+                timeline_symbols.append("[#D96800]*[/#D96800]" if is_current_time else "[#666]□[/#666]")
             else:
                 on_count += 1
-                timeline_symbols.append(f"[#D96800]*[/#D96800]" if is_current_time else "[#fff]■[/#fff]")
+                timeline_symbols.append("[#D96800]*[/#D96800]" if is_current_time else "[#fff]■[/#fff]")
 
         timeline_widget = safe_query("timeline-grid", Static, self.app)
         if timeline_widget:
@@ -154,7 +153,6 @@ class UIManager:
             return
         self.update_date_display(schedule_data)
         display_data = self.get_schedule_for_display(schedule_data)
-        off_ranges = display_data.get('off_ranges', [])
         is_next_day = display_data.get('is_next_day', False)
         now = datetime.now()
         timer_display = safe_query("timer-display", Static, self.app)

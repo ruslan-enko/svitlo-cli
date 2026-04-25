@@ -27,7 +27,6 @@ class ScheduleFetcher:
         html_content = ""
         
         try:
-            from bs4 import BeautifulSoup
             from playwright.async_api import async_playwright
 
             browser = None
@@ -111,7 +110,6 @@ class ScheduleFetcher:
         tomorrow = now + timedelta(days=1)
         tomorrow_date = tomorrow.strftime('%d.%m.%Y')
         
-        from core.config import MONTHS_UA
         today_formatted = f"{now.day} {MONTHS_UA[now.month - 1]} {now.year}"
         
         # Default initialization for today (no outages)
@@ -306,5 +304,3 @@ class ScheduleFetcher:
             ):
                 return 'Світла немає'
         return 'Світло є'
-
-        return None

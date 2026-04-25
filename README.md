@@ -14,6 +14,15 @@ pip install -e .
 svitlo-cli
 ```
 
+## Development
+
+```bash
+pip install -e .
+pip install pytest ruff
+ruff check .
+pytest -q
+```
+
 ## Controls
 
 - `t` - Switch between today/tomorrow
