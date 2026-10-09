@@ -46,12 +46,6 @@ Button:focus {
     align: center middle;
 }
 
-#current-group-display {
-    color: #D96800;
-    text-style: bold;
-    margin: 0;
-}
-
 #loading-indicator {
     color: #D96800;
     text-style: bold;
@@ -84,23 +78,10 @@ Button:focus {
     width: 100%;
 }
 
-#timeline-label {
-    text-style: bold;
-    color: #D96800;
-    margin: 0;
-    height: auto;
-}
-
 #timeline-date {
     color: #888;
     margin-bottom: 0;
     height: auto;
-}
-
-/* ============ NEXT DAY INDICATOR ============ */
-.next-day-indicator {
-    color: #D96800;
-    text-style: bold;
 }
 
 #timeline-legend {
@@ -174,14 +155,6 @@ Button:focus {
 
 .status-indicator-off {
     color: #666;
-}
-
-/* ============ INFO ============ */
-#info-container {
-    background: transparent;
-    padding: 0;
-    height: auto;
-    margin-top: 1;
 }
 
 Static {
@@ -278,17 +251,3 @@ Label {
     display: none;
 }
 
-/* ============ UPDATE NOTIFICATION ============ */
-#update-notification {
-    text-style: bold;
-    text-align: left;
-    height: auto;
-    color: #888;
-    margin: 0;
-    margin-bottom: 1;
-}
-
-#update-notification.update-available {
-    color: #00a853;
-    text-style: bold;
-}

@@ -1,1 +1,1 @@
-
+"""Tests for Svitlo CLI."""

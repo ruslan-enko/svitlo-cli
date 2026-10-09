@@ -1,9 +1,10 @@
 """Utility functions for error handling and logging"""
 
 import logging
-from functools import wraps
-from typing import Callable, Any, Optional
+from collections.abc import Callable
 from datetime import datetime
+from functools import wraps
+from typing import Any
 
 
 def setup_logging(level: int = logging.WARNING) -> None:
@@ -17,7 +18,7 @@ def setup_logging(level: int = logging.WARNING) -> None:
     )
 
 
-def safe_query(widget_id: str, widget_type: type, app=None) -> Optional[Any]:
+def safe_query(widget_id: str, widget_type: type, app=None) -> Any | None:
     """Safely query for a widget with proper error handling"""
     try:
         if app is None:
@@ -133,7 +134,7 @@ def format_off_ranges(off_ranges: list) -> list:
     return result
 
 
-def parse_group_from_button_id(button_id: str, prefix: str = "btn-group-") -> Optional[str]:
+def parse_group_from_button_id(button_id: str, prefix: str = "btn-group-") -> str | None:
     """Parse group from button ID like 'btn-group-6_1' -> '6.1'"""
     if button_id and button_id.startswith(prefix):
         return button_id[len(prefix):].replace("_", ".")

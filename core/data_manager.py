@@ -1,25 +1,25 @@
 """Data management for Svitlo CLI - handles persistent storage of parsed results"""
 
 import json
-import os
 import logging
-from typing import Dict, Optional
+import os
+
 from core.config import DATA_FILE, PREFERENCES_DIR
 
 logger = logging.getLogger(__name__)
 
-def save_last_data(data: Dict) -> bool:
+def save_last_data(data: dict) -> bool:
     """Save the latest parsed data to a file"""
     try:
         os.makedirs(PREFERENCES_DIR, exist_ok=True)
         with open(DATA_FILE, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         return True
-    except Exception as e:
+    except (OSError, TypeError, ValueError) as e:
         logger.error(f"Failed to save data to {DATA_FILE}: {e}")
         return False
 
-def load_last_data() -> Optional[Dict]:
+def load_last_data() -> dict | None:
     """Load the last saved data from file"""
     try:
         if not os.path.exists(DATA_FILE):
