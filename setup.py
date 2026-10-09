@@ -5,7 +5,7 @@ from setuptools import setup
 
 # Read README file
 def read_readme():
-    with open("README.md", "r", encoding="utf-8") as fh:
+    with open("README.md", encoding="utf-8") as fh:
         return fh.read()
 
 # Dependencies
@@ -13,12 +13,13 @@ DEPENDENCIES = [
     "textual>=0.47.0",
     "beautifulsoup4>=4.12.0",
     "lxml>=5.0.0",
+    "httpx>=0.27.0",
     "playwright>=1.48.0",
 ]
 
 setup(
     name="svitlo-cli",
-    version="1.0.0",
+    version="1.1.0",
     author="Enko",
     author_email="",
     description="Terminal TUI app for monitoring power outage schedules in Lviv",
@@ -49,7 +50,7 @@ setup(
         "Topic :: System :: Monitoring",
         "Topic :: Utilities",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=DEPENDENCIES,
     entry_points={
         "console_scripts": [
