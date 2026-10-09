@@ -8,6 +8,7 @@ from textual.widgets import Static
 
 from core.config import NOTIFICATION_THRESHOLD, NOTIFICATIONS, STATUS_TEXTS
 from core.notifications import send_desktop_notification
+from core.preferences import desktop_notifications_enabled
 from core.utils import (
     format_off_ranges,
     format_time_duration,
@@ -79,28 +80,30 @@ class UIManager:
             next_day_indicator = self.get_next_day_indicator(data)
             now = datetime.now()
             current_time = now.strftime("%H:%M")
-            
+
             # Format data freshness indicator
             updated_iso = data.get('updated', '')
             freshness = ""
             if updated_iso:
                 try:
                     updated_dt = datetime.fromisoformat(updated_iso)
+                except (TypeError, ValueError):
+                    self.logger.debug("Unparsable 'updated' value: %r", updated_iso)
+                else:
                     mins_ago = max(0, int((now - updated_dt).total_seconds() / 60))
-                    if mins_ago == 0:
-                        freshness = " | [оновлено щойно]"
-                    else:
-                        freshness = f" | [оновлено {mins_ago} хв тому]"
-                except Exception:
-                    pass
+                    freshness = (
+                        " | [оновлено щойно]" if mins_ago == 0
+                        else f" | [оновлено {mins_ago} хв тому]"
+                    )
 
             is_stale = data.get('is_stale', False)
             stale_badge = " [⚠️ Кеш (Офлайн)]" if is_stale else ""
+            date_line = f"Дата: {schedule_date} {current_time}{freshness}{stale_badge}"
 
             if next_day_indicator:
-                safe_widget_update(date_widget, f"Дата: {schedule_date} {current_time}{freshness}{stale_badge} | {next_day_indicator}")
+                safe_widget_update(date_widget, f"{date_line} | {next_day_indicator}")
             else:
-                safe_widget_update(date_widget, f"Дата: {schedule_date} {current_time}{freshness}{stale_badge}")
+                safe_widget_update(date_widget, date_line)
 
     def toggle_day(self) -> bool:
         self.showing_next_day = not self.showing_next_day
@@ -144,15 +147,16 @@ class UIManager:
         for i in range(48):
             hour = i // 2
             minute = 30 if i % 2 == 1 else 0
-            
+
             end_hour = hour if minute == 0 else hour + 1
             end_minute = 30 if minute == 0 else 0
             if end_hour == 24:
                 end_hour = 24
-                
+
             time_str = f"{hour:02d}:{minute:02d} - {end_hour:02d}:{end_minute:02d}"
             status = schedule.get(time_str, 'on')
-            is_current_time = not is_next_day and hour == now.hour and ((minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30))
+            is_current_half = (minute == 0 and now.minute < 30) or (minute == 30 and now.minute >= 30)
+            is_current_time = not is_next_day and hour == now.hour and is_current_half
 
             if status == 'off':
                 off_count += 1
@@ -263,7 +267,7 @@ class UIManager:
 
         if next_change is None:
             target_schedule = next_day_schedule if next_day_schedule else schedule
-            
+
             for item in target_schedule:
                 time_range = item['time_range']
                 parts = time_range.split(' - ')
@@ -271,7 +275,7 @@ class UIManager:
                     start_str = parts[0].strip()
                     hour = int(start_str.split(':')[0])
                     minute = int(start_str.split(':')[1]) if ':' in start_str and len(start_str.split(':')) > 1 else 0
-                    
+
                     target_min = hour * 60 + minute + 24 * 60
                     diff = target_min - now_time
 
@@ -287,10 +291,10 @@ class UIManager:
     def _is_all_day_light(self, display_data: dict[str, Any]) -> bool:
         off_ranges = display_data.get('off_ranges', [])
         current_status = display_data.get('current_status', '')
-        
+
         if not off_ranges and 'є' in current_status.lower():
             return True
-        
+
         schedule = display_data.get('schedule', [])
         all_on = all(item.get('status') == 'on' for item in schedule)
         return not off_ranges and all_on
@@ -305,18 +309,19 @@ class UIManager:
                 safe_widget_update(notification_widget, "")
             self.app.set_timer(duration, clear_notification)
 
-        # Also trigger native desktop notification
-        group = getattr(self.app, 'current_group', '')
-        send_desktop_notification(f"Svitlo CLI (Група {group})", message)
+        # Also trigger native desktop notification, unless the user opted out
+        if desktop_notifications_enabled():
+            group = getattr(self.app, 'current_group', '')
+            send_desktop_notification(f"Svitlo CLI (Група {group})", message)
 
     def check_and_show_notifications(self, data: dict[str, Any]) -> None:
         if not data:
             return
-        
+
         off_ranges = data.get('off_ranges', [])
         if not off_ranges:
             return
-        
+
         now = datetime.now()
         current_status = data.get('current_status', 'unknown')
         schedule = data.get('schedule', [])
@@ -348,8 +353,8 @@ class UIManager:
             diff = (next_change_time - now).total_seconds() / 60
             if 0 < diff <= NOTIFICATION_THRESHOLD:
                 minutes = int(diff)
-                msg = NOTIFICATIONS['light_coming_soon'].format(minutes) if next_change_status == 'on' else NOTIFICATIONS['light_going_soon'].format(minutes)
-                self.show_notification(msg)
+                key = 'light_coming_soon' if next_change_status == 'on' else 'light_going_soon'
+                self.show_notification(NOTIFICATIONS[key].format(minutes))
 
     def _update_timeline_summary(self, on_count: int, off_count: int) -> None:
         summary_widget = safe_query("timeline-summary", Static, self.app)
@@ -361,5 +366,9 @@ class UIManager:
         off_mins = (off_count % 2) * 30
         on_text = f"{on_hours}год {on_mins}хв" if on_mins > 0 else f"{on_hours}год"
         off_text = f"{off_hours}год {off_mins}хв" if off_mins > 0 else f"{off_hours}год"
-        summary = f"[#50fa7b]■ є: {on_text}[/#50fa7b]  |  [#ff5555]□ немає: {off_text}[/#ff5555]  |  [bold yellow]▲ зараз[/bold yellow]"
+        summary = (
+            f"[#50fa7b]■ є: {on_text}[/#50fa7b]  |  "
+            f"[#ff5555]□ немає: {off_text}[/#ff5555]  |  "
+            "[bold yellow]▲ зараз[/bold yellow]"
+        )
         safe_widget_update(summary_widget, summary)

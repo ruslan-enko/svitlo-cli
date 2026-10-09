@@ -41,6 +41,23 @@ svitlo-cli --export-ics
 - `h` або `?` - Відкрити довідку
 - `q` - Вийти з програми
 
+## Налаштування
+
+Налаштування зберігаються у `~/.config/svitlo-cli/preferences.json`:
+
+```json
+{
+  "group": "6.1",
+  "first_run": false,
+  "favorites": ["6.1", "4.2"],
+  "theme": "dark",
+  "enable_desktop_notifications": true
+}
+```
+
+- `favorites` - групи, між якими перемикається клавіша `f`
+- `enable_desktop_notifications` - вимкніть, щоб не отримувати системні сповіщення
+
 ## Очищення та Тестування
 
 ```bash
