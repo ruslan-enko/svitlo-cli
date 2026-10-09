@@ -1,37 +1,60 @@
-# Svitlo CLI
-Terminal app for monitoring power outage schedules in Lviv.
+# Svitlo CLI v1.1.0
 
-## Install
+Сучасний термінальний додаток (TUI) для моніторингу графіку відключень електроенергії у Львові (ЛьвівОблЕнерго).
+
+## Встановлення
 
 ```bash
 cd svitlo-cli
 pip install -e .
 ```
 
-## Run
+## Запуск
 
+### 1. Інтерактивний TUI режим:
 ```bash
 svitlo-cli
 ```
 
-## Development
-
+### 2. Однорядковий / Скриптовий режим (Non-interactive CLI):
 ```bash
-pip install -e .
-pip install pytest ruff
-ruff check .
-pytest -q
+# Перевірити поточний статус світла для збереженої групи
+svitlo-cli --status
+
+# Задати конкретну групу
+svitlo-cli --status -g 6.1
+
+# Вивести повні дані в форматі JSON (для tmux / waybar / polybar / скриптів)
+svitlo-cli --json
+
+# Експортувати розклад у файл .ics (Календар)
+svitlo-cli --export-ics
 ```
 
-## Controls
+## Гарячі клавіші у TUI
 
-- `t` - Switch between today/tomorrow
-- `r` - Refresh data
-- `q` - Exit
+- `r` - Оновити дані з сайту
+- `t` - Переключити розклад (Сьогодні / Завтра)
+- `g` - Відкрити діалог вибору групи
+- `e` - Експортувати розклад у календар (.ics)
+- `f` - Переключити між обраними групами (Favorites)
+- `h` або `?` - Відкрити довідку
+- `q` - Вийти з програми
 
-## Features
+## Очищення та Тестування
 
-- Timeline with light status
-- Timer to next change
-- Support for all groups (1.1-6.2)
-- Next day schedule (when available)
+```bash
+pip install pytest ruff
+pytest
+ruff check .
+```
+
+## Нові можливості (v1.1.0)
+
+- ⚡ **Легкий HTTP-клієнт (`httpx`)**: Миттєвий завантаження даних без необхідності запускати важкий Chromium.
+- 🔔 **Системні Desktop-сповіщення**: Нативні сповіщення macOS/Linux попереджають про зміну статусу світла навіть при згорнутому терміналі.
+- 📅 **Експорт в iCal (.ics)**: Можливість зберегти розклад у `.ics` файл для синхронізації з Google Calendar або Apple Calendar.
+- 🔍 **Пошук групи за вулицею**: Модальне вікно пошуку групи за назвою вулиці або району Львова.
+- 🎨 **Кольоровий таймлайн та індикатор часу**: Зелені/червоні блоки зі спеціальним маркером `▲` на поточному півгодинному інтервалі.
+- 💻 **Non-interactive CLI mode**: Підтримка `--status`, `--json` та `--export-ics` для скриптів і статус-барів.
+- 🧪 **Повне покриття тестами (`pytest`)**: Набір юніт-тестів для парсингу, розрахунків часу та експорту календаря.
