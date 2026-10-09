@@ -1,9 +1,9 @@
-"""Configuration and constants for Svitlo CLI application"""
+"""Configuration and constants for Svitlo CLI application."""
 
 import os
 
 APP_NAME = "Svitlo CLI"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 
 # File paths
 PREFERENCES_DIR = os.path.expanduser("~/.config/svitlo-cli")
@@ -17,6 +17,10 @@ AVAILABLE_GROUPS = [
 ]
 DEFAULT_GROUP = "6.1"
 
+# Themes
+DEFAULT_THEME = "dark"
+AVAILABLE_THEMES = ["dark", "nord", "catppuccin", "high_contrast"]
+
 # Ukrainian month names
 MONTHS_UA = [
     'Січня', 'Лютого', 'Березня', 'Квітня', 'Травня', 'Червня',
@@ -28,6 +32,7 @@ BTN_PREFIX_GROUP = "btn-group-"
 BTN_PREFIX_MODAL = "btn-modal-"
 BTN_PREFIX_ACTION = "btn-action-"
 BTN_ID_REFRESH = "action-refresh"
+BTN_ID_EXPORT = "action-export"
 BTN_ID_QUIT = "action-quit"
 BTN_ID_GROUP_SELECT = "btn-group-select"
 
