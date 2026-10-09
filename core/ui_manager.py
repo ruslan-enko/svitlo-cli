@@ -1,28 +1,30 @@
-"""UI management module for Svitlo CLI application"""
+"""UI management module for Svitlo CLI application."""
 
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
 import logging
-from threading import Timer
+from datetime import datetime
+from typing import Any
 
 from textual.widgets import Static
-from core.config import (
-    NOTIFICATIONS, STATUS_TEXTS,
-    NOTIFICATION_THRESHOLD
-)
+
+from core.config import NOTIFICATION_THRESHOLD, NOTIFICATIONS, STATUS_TEXTS
+from core.notifications import send_desktop_notification
 from core.utils import (
-    safe_widget_update, safe_query, format_time_duration,
-    format_off_ranges, is_light_on
+    format_off_ranges,
+    format_time_duration,
+    is_light_on,
+    safe_query,
+    safe_widget_update,
 )
 
 
 class UIManager:
-    """Manages UI updates and state for the application"""
+    """Manages UI updates and state for the application."""
 
     def __init__(self, app):
         self.app = app
         self.logger = logging.getLogger(__name__)
         self.showing_next_day = False
+        self.notification_clear_timer = None
 
     def show_loading(self, is_loading: bool) -> None:
         loading_text = STATUS_TEXTS['loading'] if is_loading else ""
@@ -30,14 +32,15 @@ class UIManager:
         loading_indicator = safe_query("loading-indicator", Static, self.app)
         timer_display = safe_query("timer-display", Static, self.app)
         safe_widget_update(loading_indicator, f"{loading_text}")
-        safe_widget_update(timer_display, f"{updating_text}")
+        if is_loading:
+            safe_widget_update(timer_display, f"{updating_text}")
 
     def show_error(self, error: str) -> None:
         timer_display = safe_query("timer-display", Static, self.app)
         safe_widget_update(timer_display, f"□ Помилка: {error}")
         self.logger.error(f"Error displayed: {error}")
 
-    def update_status_display(self, data: Dict[str, Any]) -> None:
+    def update_status_display(self, data: dict[str, Any]) -> None:
         status = data.get('current_status', 'unknown')
         timer_display = safe_query("timer-display", Static, self.app)
 
@@ -52,7 +55,7 @@ class UIManager:
                 timer_display.remove_class("status-indicator-on")
                 timer_display.add_class("status-indicator-off")
 
-    def update_off_schedule(self, data: Dict[str, Any]) -> None:
+    def update_off_schedule(self, data: dict[str, Any]) -> None:
         off_schedule_widget = safe_query("off-schedule-text", Static, self.app)
         if not off_schedule_widget:
             return
@@ -68,7 +71,7 @@ class UIManager:
         else:
             safe_widget_update(off_schedule_widget, "")
 
-    def update_date_display(self, data: Dict[str, Any]) -> None:
+    def update_date_display(self, data: dict[str, Any]) -> None:
         display_data = self.get_schedule_for_display(data)
         schedule_date = display_data.get('schedule_date', '')
         if schedule_date:
@@ -76,11 +79,28 @@ class UIManager:
             next_day_indicator = self.get_next_day_indicator(data)
             now = datetime.now()
             current_time = now.strftime("%H:%M")
-            if next_day_indicator:
-                safe_widget_update(date_widget, f"Дата: {schedule_date} {current_time} | {next_day_indicator}")
-            else:
-                safe_widget_update(date_widget, f"Дата: {schedule_date} {current_time}")
+            
+            # Format data freshness indicator
+            updated_iso = data.get('updated', '')
+            freshness = ""
+            if updated_iso:
+                try:
+                    updated_dt = datetime.fromisoformat(updated_iso)
+                    mins_ago = max(0, int((now - updated_dt).total_seconds() / 60))
+                    if mins_ago == 0:
+                        freshness = " | [оновлено щойно]"
+                    else:
+                        freshness = f" | [оновлено {mins_ago} хв тому]"
+                except Exception:
+                    pass
 
+            is_stale = data.get('is_stale', False)
+            stale_badge = " [⚠️ Кеш (Офлайн)]" if is_stale else ""
+
+            if next_day_indicator:
+                safe_widget_update(date_widget, f"Дата: {schedule_date} {current_time}{freshness}{stale_badge} | {next_day_indicator}")
+            else:
+                safe_widget_update(date_widget, f"Дата: {schedule_date} {current_time}{freshness}{stale_badge}")
 
     def toggle_day(self) -> bool:
         self.showing_next_day = not self.showing_next_day
@@ -89,7 +109,7 @@ class UIManager:
     def is_showing_next_day(self) -> bool:
         return self.showing_next_day
 
-    def get_schedule_for_display(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def get_schedule_for_display(self, data: dict[str, Any]) -> dict[str, Any]:
         if self.showing_next_day and data.get('has_next_day'):
             return {
                 'schedule': data.get('next_day_schedule', []),
@@ -106,12 +126,12 @@ class UIManager:
             'off_ranges': data.get('off_ranges', [])
         }
 
-    def get_next_day_indicator(self, data: Dict[str, Any]) -> str:
+    def get_next_day_indicator(self, data: dict[str, Any]) -> str:
         if data.get('has_next_day'):
-            return "Завтра (натисніть t для сьогодні)" if self.showing_next_day else "Є розклад на завтра (натисніть t)"
+            return "Завтра (t - сьогодні)" if self.showing_next_day else "Є розклад на завтра (натисніть t)"
         return ""
 
-    def update_timeline(self, data: Dict[str, Any]) -> None:
+    def update_timeline(self, data: dict[str, Any]) -> None:
         now = datetime.now()
         display_data = self.get_schedule_for_display(data)
         schedule = {item['time_range']: item['status'] for item in display_data.get('schedule', [])}
@@ -125,7 +145,6 @@ class UIManager:
             hour = i // 2
             minute = 30 if i % 2 == 1 else 0
             
-            # Calculate end time to match schedule key format
             end_hour = hour if minute == 0 else hour + 1
             end_minute = 30 if minute == 0 else 0
             if end_hour == 24:
@@ -137,10 +156,16 @@ class UIManager:
 
             if status == 'off':
                 off_count += 1
-                timeline_symbols.append("[#D96800]*[/#D96800]" if is_current_time else "[#666]□[/#666]")
+                if is_current_time:
+                    timeline_symbols.append("[bold yellow]▲[#ff5555]□[/#ff5555][/bold yellow]")
+                else:
+                    timeline_symbols.append("[#ff5555]□[/#ff5555]")
             else:
                 on_count += 1
-                timeline_symbols.append("[#D96800]*[/#D96800]" if is_current_time else "[#fff]■[/#fff]")
+                if is_current_time:
+                    timeline_symbols.append("[bold yellow]▲[#50fa7b]■[/#50fa7b][/bold yellow]")
+                else:
+                    timeline_symbols.append("[#50fa7b]■[/#50fa7b]")
 
         timeline_widget = safe_query("timeline-grid", Static, self.app)
         if timeline_widget:
@@ -148,7 +173,7 @@ class UIManager:
 
         self._update_timeline_summary(on_count, off_count)
 
-    def update_timer(self, schedule_data: Optional[Dict[str, Any]]) -> None:
+    def update_timer(self, schedule_data: dict[str, Any] | None) -> None:
         if not schedule_data:
             return
         self.update_date_display(schedule_data)
@@ -158,7 +183,6 @@ class UIManager:
         timer_display = safe_query("timer-display", Static, self.app)
         next_change_info = safe_query("next-change-info", Static, self.app)
 
-        # Check for all-day light scenario
         if self._is_all_day_light(display_data):
             if is_next_day:
                 safe_widget_update(timer_display, STATUS_TEXTS['all_day_tomorrow'])
@@ -199,35 +223,20 @@ class UIManager:
     def _find_first_outage_times(self, schedule: list) -> tuple:
         first_off = None
         first_on = None
-        prev_status = None
-        found_off = False
 
         for item in schedule:
-            time_range = item['time_range']
             status = item['status']
-            start_time = time_range.split(' - ')[0]
+            start_time = item['time_range'].split(' - ')[0]
 
-            if prev_status is None and status == 'off':
+            if status == 'off' and first_off is None:
                 first_off = start_time
-                prev_status = status
-                continue
-
-            if status == 'off' and prev_status == 'on':
-                first_off = start_time
-                first_on = None
-                found_off = False
-
-            if first_off and status == 'off':
-                found_off = True
-            elif first_off and status == 'on' and found_off and first_on is None:
+            elif status == 'on' and first_off is not None and first_on is None:
                 first_on = start_time
                 break
 
-            prev_status = status
-
         return first_off, first_on
 
-    def _find_next_change(self, schedule: list, now: datetime, next_day_schedule: Optional[list] = None) -> tuple:
+    def _find_next_change(self, schedule: list, now: datetime, next_day_schedule: list | None = None) -> tuple:
         now_time = now.hour * 60 + now.minute
         current_status = None
         next_change = None
@@ -253,7 +262,6 @@ class UIManager:
                     next_status = item['status']
 
         if next_change is None:
-            # If next day schedule is available, use it
             target_schedule = next_day_schedule if next_day_schedule else schedule
             
             for item in target_schedule:
@@ -264,46 +272,44 @@ class UIManager:
                     hour = int(start_str.split(':')[0])
                     minute = int(start_str.split(':')[1]) if ':' in start_str and len(start_str.split(':')) > 1 else 0
                     
-                    # If we're using next day schedule, time is relative to midnight of next day
-                    # If we're wrapping current schedule, time is also effectively relative to next midnight for calculation
                     target_min = hour * 60 + minute + 24 * 60
                     diff = target_min - now_time
 
                     if item['status'] != current_status and diff < min_diff:
                         min_diff = diff
+                        from datetime import timedelta
                         target_time = now.replace(minute=minute, second=0, microsecond=0, hour=hour) + timedelta(days=1)
                         next_change = target_time
                         next_status = item['status']
 
         return next_change, next_status, current_status
 
-    def _is_all_day_light(self, display_data: Dict[str, Any]) -> bool:
-        """Check if light is available all day"""
+    def _is_all_day_light(self, display_data: dict[str, Any]) -> bool:
         off_ranges = display_data.get('off_ranges', [])
         current_status = display_data.get('current_status', '')
         
-        # Check for explicit all-day indicators
         if not off_ranges and 'є' in current_status.lower():
             return True
         
-        # Check timeline for all "on" status
         schedule = display_data.get('schedule', [])
         all_on = all(item.get('status') == 'on' for item in schedule)
-        
         return not off_ranges and all_on
 
     def show_notification(self, message: str, duration: int = 10) -> None:
         notification_widget = safe_query("notification-display", Static, self.app)
         safe_widget_update(notification_widget, message)
 
-        def clear_notification():
-            safe_widget_update(notification_widget, "")
+        # Thread-safe UI clear using Textual set_timer
+        if hasattr(self.app, 'set_timer'):
+            def clear_notification():
+                safe_widget_update(notification_widget, "")
+            self.app.set_timer(duration, clear_notification)
 
-        timer = Timer(duration, clear_notification)
-        timer.daemon = True
-        timer.start()
+        # Also trigger native desktop notification
+        group = getattr(self.app, 'current_group', '')
+        send_desktop_notification(f"Svitlo CLI (Група {group})", message)
 
-    def check_and_show_notifications(self, data: Dict[str, Any]) -> None:
+    def check_and_show_notifications(self, data: dict[str, Any]) -> None:
         if not data:
             return
         
@@ -332,7 +338,7 @@ class UIManager:
                 target_time = now.replace(minute=minute, second=0, microsecond=0, hour=hour)
 
                 if target_time > now:
-                    current_item_status = schedule[i-1]['status'] if i > 0 else 'off'
+                    current_item_status = schedule[i-1]['status'] if i > 0 else schedule[0]['status']
                     if item['status'] != current_item_status:
                         next_change_time = target_time
                         next_change_status = item['status']
@@ -355,5 +361,5 @@ class UIManager:
         off_mins = (off_count % 2) * 30
         on_text = f"{on_hours}год {on_mins}хв" if on_mins > 0 else f"{on_hours}год"
         off_text = f"{off_hours}год {off_mins}хв" if off_mins > 0 else f"{off_hours}год"
-        summary = f"■ є: {on_text}  |  □ немає: {off_text}  |  * зараз"
+        summary = f"[#50fa7b]■ є: {on_text}[/#50fa7b]  |  [#ff5555]□ немає: {off_text}[/#ff5555]  |  [bold yellow]▲ зараз[/bold yellow]"
         safe_widget_update(summary_widget, summary)
