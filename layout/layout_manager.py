@@ -35,8 +35,7 @@ class LayoutManager:
         """Determine layout type based on terminal size"""
         if terminal_width < BREAKPOINT_LARGE:
             return 'medium'
-        else:
-            return 'large'
+        return 'large'
 
     @staticmethod
     def get_config(layout_type: LayoutType) -> dict:

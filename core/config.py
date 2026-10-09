@@ -17,9 +17,8 @@ AVAILABLE_GROUPS = [
 ]
 DEFAULT_GROUP = "6.1"
 
-# Themes
+# Theme stored in preferences (only "dark" is styled for now)
 DEFAULT_THEME = "dark"
-AVAILABLE_THEMES = ["dark", "nord", "catppuccin", "high_contrast"]
 
 # Ukrainian month names
 MONTHS_UA = [

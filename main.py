@@ -7,6 +7,7 @@ import os
 import sys
 import warnings
 from datetime import datetime
+from typing import ClassVar
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Vertical
@@ -40,6 +41,8 @@ from layout.layout_manager import LayoutManager, LayoutType
 from screens import GroupSelectDialog, GroupSelectionScreen, HelpDialog
 from ui.popup_utils import make_button_label
 
+logger = logging.getLogger(__name__)
+
 
 def configure_warnings() -> None:
     """Suppress common SSL-related warnings on macOS environments."""
@@ -48,7 +51,7 @@ def configure_warnings() -> None:
     try:
         from urllib3.exceptions import NotOpenSSLWarning
         warnings.filterwarnings("ignore", category=NotOpenSSLWarning)
-    except Exception:
+    except ImportError:
         pass
 
 
@@ -56,10 +59,10 @@ def load_css() -> str:
     """Load CSS styles from external file."""
     try:
         css_file = os.path.join(os.path.dirname(__file__), 'styles.css')
-        with open(css_file, 'r', encoding='utf-8') as f:
+        with open(css_file, encoding='utf-8') as f:
             return f.read()
-    except (FileNotFoundError, OSError) as e:
-        logging.error(f"Failed to load CSS: {e}")
+    except (FileNotFoundError, OSError):
+        logger.exception("Failed to load CSS")
         return ""
 
 
@@ -74,7 +77,7 @@ LOGO_LINES = [
 class SvitloApp(App):
     CSS = load_css()
     TITLE = f"{APP_NAME} v{APP_VERSION}"
-    BINDINGS = [
+    BINDINGS: ClassVar[list[tuple[str, str, str]]] = [
         ("r", "refresh", "Оновити"),
         ("t", "toggle_day", "Завтра/Сьогодні"),
         ("g", "open_group_select", "Група"),
@@ -90,7 +93,7 @@ class SvitloApp(App):
         ("end", "scroll_end", "В кінець"),
         ("q", "quit", "Вихід"),
     ]
-    
+
     ENABLE_SCROLLING = True
 
     def __init__(self, initial_group: str | None = None):
@@ -98,7 +101,9 @@ class SvitloApp(App):
         self.fetcher = ScheduleFetcher()
         self.ui_manager = UIManager(self)
         self.current_group = initial_group if initial_group else DEFAULT_GROUP
-        self.current_group_index = AVAILABLE_GROUPS.index(self.current_group) if self.current_group in AVAILABLE_GROUPS else 0
+        self.current_group_index = (
+            AVAILABLE_GROUPS.index(self.current_group) if self.current_group in AVAILABLE_GROUPS else 0
+        )
         self.schedule_data = None
         self.all_schedules = None
         self.updated = ""
@@ -123,7 +128,7 @@ class SvitloApp(App):
                     yield Static("", id="notification-display")
                     yield Static("", id="off-schedule-text")
                     yield Static("", id="loading-indicator")
- 
+
             with Container(id="actions-container"):
                 yield Button(make_button_label(f"Група {self.current_group}"), id=BTN_ID_GROUP_SELECT)
                 yield Button(make_button_label("Експорт .ics"), id=BTN_ID_EXPORT)
@@ -156,8 +161,8 @@ class SvitloApp(App):
         try:
             layout_type = LayoutManager.get_layout_type(event.size.width, event.size.height)
             self._apply_layout(layout_type)
-        except Exception as e:
-            logging.error(f"Resize error: {e}")
+        except Exception:
+            logger.exception("Resize error")
 
     def _apply_layout(self, layout_type: LayoutType) -> None:
         config = LayoutManager.get_config(layout_type)

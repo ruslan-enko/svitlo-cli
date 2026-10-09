@@ -222,7 +222,10 @@ class AddressLookupDialog(Screen):
         elif not results:
             results_widget.update(f"За запитом '{query}' груп не знайдено.")
         else:
-            lines = [f"[bold]{r['street']}[/bold] ({r['district']} р-н) -> [bold yellow]Група {r['group']}[/bold yellow]" for r in results]
+            lines = [
+                f"[bold]{r['street']}[/bold] ({r['district']} р-н) -> [bold yellow]Група {r['group']}[/bold yellow]"
+                for r in results
+            ]
             results_widget.update("\n".join(lines))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

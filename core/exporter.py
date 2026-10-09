@@ -1,8 +1,11 @@
 """Exporter module for Svitlo CLI to export schedule to iCalendar (.ics) format."""
 
+import logging
 import os
 from datetime import datetime
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def generate_ics_content(group: str, schedule_data: dict[str, Any]) -> str:
@@ -22,7 +25,7 @@ def generate_ics_content(group: str, schedule_data: dict[str, Any]) -> str:
     # Extract date for current day
     schedule_date_str = schedule_data.get('schedule_date', '')
     off_ranges = schedule_data.get('off_ranges', [])
-    
+
     # Process today ranges
     _add_events_for_day(lines, group, off_ranges, schedule_date_str, now_str)
 
@@ -57,7 +60,7 @@ def _add_events_for_day(
         end_hour, end_min = r['end']
 
         dt_start = target_date.replace(hour=start_hour, minute=start_min, second=0, microsecond=0)
-        
+
         # Handle midnight end time (24:00 -> next day 00:00)
         if end_hour >= 24:
             dt_end = target_date.replace(hour=0, minute=end_min, second=0, microsecond=0)
@@ -94,8 +97,8 @@ def _parse_date_string(date_str: str) -> datetime:
         parts = date_str.split('.')
         if len(parts) == 3:
             return datetime(int(parts[2]), int(parts[1]), int(parts[0]))
-    except Exception:
-        pass
+    except ValueError:
+        logger.debug("Date %r is not in dot format", date_str)
 
     # Try '5 Серпня 2026'
     try:
@@ -111,13 +114,13 @@ def _parse_date_string(date_str: str) -> datetime:
                     month = i + 1
                     break
             return datetime(year, month, day)
-    except Exception:
-        pass
+    except ValueError:
+        logger.debug("Date %r is not in Ukrainian month-name format", date_str)
 
     return now
 
 
-def export_to_ics_file(group: str, schedule_data: dict[str, Any], filepath: str = None) -> str:
+def export_to_ics_file(group: str, schedule_data: dict[str, Any], filepath: str | None = None) -> str:
     """Export schedule data to an .ics file and return the absolute path."""
     if not filepath:
         filename = f"svitlo_group_{group.replace('.', '_')}.ics"

@@ -15,11 +15,21 @@ def send_desktop_notification(title: str, message: str) -> bool:
         if system == "Darwin":
             # macOS osascript
             script = f'display notification "{message}" with title "{title}" sound name "Glass"'
-            subprocess.run(["osascript", "-e", script], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(
+                ["osascript", "-e", script],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
             return True
-        elif system == "Linux":
+        if system == "Linux":
             # Linux notify-send
-            subprocess.run(["notify-send", title, message], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(
+                ["notify-send", title, message],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
             return True
     except Exception as e:
         logger.warning(f"Failed to send desktop notification: {e}")

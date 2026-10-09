@@ -1,6 +1,7 @@
 import logging
 import re
 from datetime import datetime, timedelta
+from typing import ClassVar
 
 import httpx
 
@@ -12,8 +13,11 @@ from core.utils import time_range_contains
 class ScheduleFetcher:
     """Handles fetching power outage schedule data from Lvivoblenergo website."""
     BASE_URL = "https://poweron.loe.lviv.ua"
-    HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    HEADERS: ClassVar[dict[str, str]] = {
+        "User-Agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        ),
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "uk,en-US;q=0.9,en;q=0.8",
     }
@@ -50,8 +54,8 @@ class ScheduleFetcher:
                     finally:
                         await page.close()
                         await browser.close()
-            except Exception as e:
-                self.logger.error(f"Playwright fallback also failed: {e}")
+            except Exception:
+                self.logger.exception("Playwright fallback also failed")
 
         # If we successfully obtained HTML content
         if html_content:
@@ -66,9 +70,10 @@ class ScheduleFetcher:
                     'updated': datetime.now().isoformat()
                 }
                 save_last_data(result)
+            except Exception:
+                self.logger.exception("Error parsing schedule HTML")
+            else:
                 return result
-            except Exception as e:
-                self.logger.error(f"Error parsing schedule HTML: {e}")
 
         # Fallback to cached data if network or parsing failed
         last_data = load_last_data()
@@ -163,11 +168,14 @@ class ScheduleFetcher:
                     start_min = off_range['start'][0] * 60 + off_range['start'][1]
                     end_min = off_range['end'][0] * 60 + off_range['end'][1]
 
+                    start_h, start_m = off_range['start']
+                    end_h, end_m = off_range['end']
+
                     if start_min > now_minutes:
-                        next_event_text = f"Наступне відключення о {off_range['start'][0]:02d}:{off_range['start'][1]:02d}"
+                        next_event_text = f"Наступне відключення о {start_h:02d}:{start_m:02d}"
                         break
-                    elif start_min <= now_minutes < end_min:
-                        next_event_text = f"Світло з'явиться о {off_range['end'][0]:02d}:{off_range['end'][1]:02d}"
+                    if start_min <= now_minutes < end_min:
+                        next_event_text = f"Світло з'явиться о {end_h:02d}:{end_m:02d}"
                         break
                 result['next_event'] = next_event_text
 
@@ -178,8 +186,8 @@ class ScheduleFetcher:
                 result['next_day_off_ranges'] = off_ranges
 
                 if off_ranges:
-                    first_out = off_ranges[0]
-                    result['next_day_event'] = f"Перше відключення о {first_out['start'][0]:02d}:{first_out['start'][1]:02d}"
+                    first_h, first_m = off_ranges[0]['start']
+                    result['next_day_event'] = f"Перше відключення о {first_h:02d}:{first_m:02d}"
                 else:
                     result['next_day_event'] = 'Немає запланованих змін'
 

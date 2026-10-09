@@ -14,18 +14,18 @@ def save_last_data(data: dict) -> bool:
         os.makedirs(PREFERENCES_DIR, exist_ok=True)
         with open(DATA_FILE, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-        return True
-    except (OSError, TypeError, ValueError) as e:
-        logger.error(f"Failed to save data to {DATA_FILE}: {e}")
+    except (OSError, TypeError, ValueError):
+        logger.exception("Failed to save data to %s", DATA_FILE)
         return False
+    return True
 
 def load_last_data() -> dict | None:
     """Load the last saved data from file"""
     try:
         if not os.path.exists(DATA_FILE):
             return None
-        with open(DATA_FILE, 'r', encoding='utf-8') as f:
+        with open(DATA_FILE, encoding='utf-8') as f:
             return json.load(f)
-    except Exception as e:
-        logger.error(f"Failed to load data from {DATA_FILE}: {e}")
+    except Exception:
+        logger.exception("Failed to load data from %s", DATA_FILE)
         return None

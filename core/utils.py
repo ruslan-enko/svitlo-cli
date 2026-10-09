@@ -6,6 +6,8 @@ from datetime import datetime
 from functools import wraps
 from typing import Any
 
+logger = logging.getLogger(__name__)
+
 
 def setup_logging(level: int = logging.WARNING) -> None:
     """Setup application logging with console output only"""
@@ -25,7 +27,7 @@ def safe_query(widget_id: str, widget_type: type, app=None) -> Any | None:
             return None
         return app.query_one(f"#{widget_id}", widget_type)
     except Exception as e:
-        logging.warning(f"Failed to query widget #{widget_id}: {e}")
+        logger.warning("Failed to query widget #%s: %s", widget_id, e)
     return None
 
 
@@ -36,7 +38,7 @@ def safe_widget_update(widget: Any, content: str) -> bool:
             widget.update(content)
             return True
     except Exception as e:
-        logging.warning(f"Failed to update widget: {e}")
+        logger.warning("Failed to update widget: %s", e)
     return False
 
 
@@ -46,8 +48,8 @@ def handle_ui_errors(func: Callable) -> Callable:
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except Exception as e:
-            logging.error(f"UI Error in {func.__name__}: {e}")
+        except Exception:
+            logger.exception("UI Error in %s", func.__name__)
             return None
     return wrapper
 
@@ -58,8 +60,8 @@ def handle_async_errors(func: Callable) -> Callable:
     async def wrapper(*args, **kwargs):
         try:
             return await func(*args, **kwargs)
-        except Exception as e:
-            logging.error(f"Async Error in {func.__name__}: {e}")
+        except Exception:
+            logger.exception("Async Error in %s", func.__name__)
             return None
     return wrapper
 
@@ -126,10 +128,7 @@ def format_off_ranges(off_ranges: list) -> list:
             duration_minutes += 24 * 60
         duration_hours = duration_minutes // 60
         duration_mins = duration_minutes % 60
-        if duration_mins > 0:
-            duration_str = f"{duration_hours}:{duration_mins:02d} год."
-        else:
-            duration_str = f"{duration_hours} год."
+        duration_str = f"{duration_hours}:{duration_mins:02d} год." if duration_mins > 0 else f"{duration_hours} год."
         result.append(f"З {start_str} до {end_str}, тривалість {duration_str}")
     return result
 
@@ -156,5 +155,4 @@ def time_range_contains(current_minutes: int, start_minutes: int, end_minutes: i
     """Check if current time falls within a time range (handles midnight crossing)"""
     if start_minutes < end_minutes:
         return start_minutes <= current_minutes < end_minutes
-    else:
-        return current_minutes >= start_minutes or current_minutes < end_minutes
+    return current_minutes >= start_minutes or current_minutes < end_minutes
