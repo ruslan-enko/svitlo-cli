@@ -104,3 +104,34 @@ def test_dialogs_shrink_to_their_content(tmp_path, monkeypatch):
                 await pilot.pause()
 
     asyncio.run(exercise())
+
+
+def test_dialogs_do_not_span_the_whole_width(tmp_path, monkeypatch):
+    """The group dialogs used to stretch to the full terminal width."""
+    tmp_path_prefs = tmp_path / "preferences.json"
+    monkeypatch.setattr(preferences, "PREFERENCES_DIR", str(tmp_path))
+    monkeypatch.setattr(preferences, "PREFERENCES_FILE", str(tmp_path_prefs))
+    monkeypatch.setattr(main_module, "is_first_run", lambda: False)
+    monkeypatch.setattr(main_module, "get_saved_group", lambda: "6.1")
+    monkeypatch.setattr(main_module, "get_theme", lambda: DEFAULT_THEME)
+    monkeypatch.setattr(main_module.SvitloApp, "_load_schedule", _noop_load_schedule)
+    monkeypatch.setattr(ui_manager_module, "desktop_notifications_enabled", lambda: False)
+
+    app = main_module.SvitloApp()
+
+    async def exercise():
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause()
+            screen_width = app.screen.size.width
+
+            for screen_type in (GroupSelectDialog, GroupSelectionScreen):
+                await app.push_screen(screen_type())
+                await pilot.pause()
+
+                width = app.screen.query_one(".dialog-container, .modal-container").size.width
+                assert width < screen_width / 2, f"{screen_type.__name__} is {width} of {screen_width}"
+
+                app.pop_screen()
+                await pilot.pause()
+
+    asyncio.run(exercise())

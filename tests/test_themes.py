@@ -82,5 +82,29 @@ def test_theme_choice_is_persisted(tmp_path, monkeypatch):
     assert preferences.get_theme() == "nord"
 
 
+def test_focused_button_uses_the_theme_instead_of_reversed_text(tmp_path, monkeypatch):
+    """Textual's default focus style reverses the label, which ignores the theme."""
+    _isolate_prefs(tmp_path, monkeypatch)
+    monkeypatch.setattr(main_module, "is_first_run", lambda: False)
+    monkeypatch.setattr(main_module, "get_saved_group", lambda: "6.1")
+    monkeypatch.setattr(main_module, "get_theme", lambda: "nord")
+    monkeypatch.setattr(main_module.SvitloApp, "_load_schedule", _noop_load_schedule)
+    monkeypatch.setattr(ui_manager_module, "desktop_notifications_enabled", lambda: False)
+
+    app = main_module.SvitloApp()
+
+    async def exercise():
+        async with app.run_test() as pilot:
+            button = app.query_one("#action-refresh")
+            button.focus()
+            await pilot.pause()
+
+            assert button.styles.background == Color.parse(app.theme_colors['focus_bg'])
+            assert button.styles.text_style.reverse is None
+            assert button.styles.text_style.bold
+
+    asyncio.run(exercise())
+
+
 async def _noop_load_schedule(self) -> None:
     """Replacement for the network fetch during tests."""
