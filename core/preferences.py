@@ -5,7 +5,8 @@ import logging
 import os
 from typing import Any
 
-from core.config import DEFAULT_GROUP, DEFAULT_THEME, PREFERENCES_DIR, PREFERENCES_FILE
+from core.config import DEFAULT_GROUP, PREFERENCES_DIR, PREFERENCES_FILE
+from core.themes import DEFAULT_THEME
 
 logger = logging.getLogger(__name__)
 
@@ -95,3 +96,9 @@ def get_favorites() -> list[str]:
 def desktop_notifications_enabled() -> bool:
     """Check whether native desktop notifications are enabled."""
     return bool(load_preferences().get('enable_desktop_notifications', True))
+
+
+def get_theme() -> str:
+    """Get the stored colour theme, falling back to the default one."""
+    theme = load_preferences().get('theme')
+    return theme if isinstance(theme, str) and theme else DEFAULT_THEME

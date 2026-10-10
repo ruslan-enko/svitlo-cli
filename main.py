@@ -31,14 +31,16 @@ from core.exporter import export_to_ics_file
 from core.preferences import (
     get_favorites,
     get_saved_group,
+    get_theme,
     is_first_run,
     save_preferences,
 )
 from core.schedule_fetcher import ScheduleFetcher
+from core.themes import AVAILABLE_THEMES, DEFAULT_THEME, colors_for
 from core.ui_manager import UIManager
 from core.utils import handle_ui_errors, parse_group_from_button_id, setup_logging
 from layout.layout_manager import LayoutManager, LayoutType
-from screens import GroupSelectDialog, GroupSelectionScreen, HelpDialog
+from screens import GroupSelectDialog, GroupSelectionScreen, HelpDialog, ThemeDialog
 from ui.popup_utils import make_button_label
 
 logger = logging.getLogger(__name__)
@@ -83,6 +85,7 @@ class SvitloApp(App):
         ("g", "open_group_select", "Група"),
         ("e", "export_ics", "Експорт ICS"),
         ("f", "toggle_favorite", "Favorites"),
+        ("T", "change_theme", "Тема"),
         ("h", "show_help", "Довідка"),
         ("question_mark", "show_help", "Довідка"),
         ("up", "scroll_up", "Вгору"),
@@ -95,6 +98,10 @@ class SvitloApp(App):
     ]
 
     ENABLE_SCROLLING = True
+
+    # Class-level default: App.__init__ reads the CSS variables before our own
+    # __init__ body has had a chance to load the stored theme.
+    theme_name: str = DEFAULT_THEME
 
     def __init__(self, initial_group: str | None = None):
         super().__init__()
@@ -110,6 +117,33 @@ class SvitloApp(App):
         self.last_notification_minute = -1
         self.auto_refresh_enabled = True
         self.logger = logging.getLogger(__name__)
+        stored_theme = get_theme()
+        self.theme_name = stored_theme if stored_theme in AVAILABLE_THEMES else DEFAULT_THEME
+
+    @property
+    def theme_colors(self) -> dict[str, str]:
+        """Colour tokens of the theme currently in use."""
+        return colors_for(self.theme_name)
+
+    def get_css_variables(self) -> dict[str, str]:
+        """Expose the theme colours to styles.css as $token variables."""
+        return {**super().get_css_variables(), **self.theme_colors}
+
+    def set_theme(self, theme: str) -> None:
+        """Switch the colour theme and remember the choice."""
+        if theme not in AVAILABLE_THEMES:
+            self.logger.warning("Unknown theme %r, keeping %s", theme, self.theme_name)
+            return
+
+        self.theme_name = theme
+        save_preferences(self.current_group, theme=theme)
+        self.refresh_css()
+        self.update_group_button_label()
+
+        # The timeline and summary are rendered as markup, so they need a redraw.
+        if self.schedule_data:
+            self.ui_manager.update_timeline(self.schedule_data)
+        self.ui_manager.show_notification(f"Тема: {theme}")
 
     def compose(self) -> ComposeResult:
         with Container(id="main-container"):
@@ -130,16 +164,20 @@ class SvitloApp(App):
                     yield Static("", id="loading-indicator")
 
             with Container(id="actions-container"):
-                yield Button(make_button_label(f"Група {self.current_group}"), id=BTN_ID_GROUP_SELECT)
-                yield Button(make_button_label("Експорт .ics"), id=BTN_ID_EXPORT)
-                yield Button(make_button_label("Оновити"), id=BTN_ID_REFRESH)
-                yield Button(make_button_label("Вихід"), id=BTN_ID_QUIT)
+                group_label = make_button_label(f"Група {self.current_group}", self.theme_colors)
+                yield Button(group_label, id=BTN_ID_GROUP_SELECT)
+                yield Button(make_button_label("Експорт .ics", self.theme_colors), id=BTN_ID_EXPORT)
+                yield Button(make_button_label("Оновити", self.theme_colors), id=BTN_ID_REFRESH)
+                yield Button(make_button_label("Вихід", self.theme_colors), id=BTN_ID_QUIT)
 
         self.set_interval(UPDATE_INTERVAL, self.update_timer)
         self.set_interval(DATA_REFRESH_INTERVAL, self._do_auto_refresh)
 
     @handle_ui_errors
     async def on_mount(self) -> None:
+        # The stored theme is known only after App.__init__ built the stylesheet,
+        # so the CSS variables have to be applied once the app is running.
+        self.refresh_css()
         await self._init_group()
         self.update_group_button_label()
         self.run_worker(self._load_schedule())
@@ -273,7 +311,7 @@ class SvitloApp(App):
 
     def update_group_button_label(self) -> None:
         group_button = self.query_one(f"#{BTN_ID_GROUP_SELECT}", Button)
-        group_button.label = make_button_label(f"Група {self.current_group}")
+        group_button.label = make_button_label(f"Група {self.current_group}", self.theme_colors)
 
     def _action_refresh(self) -> None:
         self.run_worker(self._load_schedule())
@@ -291,6 +329,9 @@ class SvitloApp(App):
 
     def action_show_help(self) -> None:
         self.push_screen(HelpDialog())
+
+    def action_change_theme(self) -> None:
+        self.push_screen(ThemeDialog())
 
     def action_export_ics(self) -> None:
         if self.schedule_data:

@@ -17,9 +17,6 @@ AVAILABLE_GROUPS = [
 ]
 DEFAULT_GROUP = "6.1"
 
-# Theme stored in preferences (only "dark" is styled for now)
-DEFAULT_THEME = "dark"
-
 # Ukrainian month names
 MONTHS_UA = [
     'Січня', 'Лютого', 'Березня', 'Квітня', 'Травня', 'Червня',
@@ -30,6 +27,7 @@ MONTHS_UA = [
 BTN_PREFIX_GROUP = "btn-group-"
 BTN_PREFIX_MODAL = "btn-modal-"
 BTN_PREFIX_ACTION = "btn-action-"
+BTN_PREFIX_THEME = "btn-theme-"
 BTN_ID_REFRESH = "action-refresh"
 BTN_ID_EXPORT = "action-export"
 BTN_ID_QUIT = "action-quit"
@@ -80,17 +78,3 @@ NOTIFICATIONS = {
 # First run
 FIRST_RUN_TITLE = "Ласкаво просимо до Svitlo CLI"
 FIRST_RUN_MESSAGE = "Оберіть вашу групу для моніторингу графіку відключень:"
-
-# Colors
-COLORS = {
-    'background': '#1a1a1a',
-    'primary': '#D96800',
-    'success': '#00a853',
-    'error': '#333333',
-    'text': '#fff',
-    'text_secondary': '#888',
-    'text_muted': '#666',
-    'border': '#2a2a2a',
-    'border_light': '#222',
-    'current': '#fff'
-}

@@ -1,7 +1,7 @@
 /* ============ BASE STYLES ============ */
 
 Screen {
-    background: #1a1a1a;
+    background: $bg;
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -26,7 +26,7 @@ Button {
     min-width: 0;
     height: auto;
     width: auto;
-    color: #888;
+    color: $text_dim;
 }
 
 Button:hover {
@@ -47,7 +47,7 @@ Button:focus {
 }
 
 #loading-indicator {
-    color: #D96800;
+    color: $accent;
     text-style: bold;
     height: auto;
 }
@@ -58,7 +58,7 @@ Button:focus {
 #timeline-label-3,
 #timeline-label-4 {
     text-style: bold;
-    color: #D96800;
+    color: $accent;
     margin: 0;
     height: auto;
     text-align: center;
@@ -70,7 +70,7 @@ Button:focus {
 
 /* ============ TIMELINE ============ */
 #timeline-container {
-    background: #1a1a1a;
+    background: $bg;
     padding: 0;
     height: auto;
     min-height: 6;
@@ -79,19 +79,19 @@ Button:focus {
 }
 
 #timeline-date {
-    color: #888;
+    color: $text_dim;
     margin-bottom: 0;
     height: auto;
 }
 
 #timeline-legend {
-    color: #666;
+    color: $text_faint;
     margin-bottom: 0;
 }
 
 #timeline-grid {
     text-style: bold;
-    color: #666;
+    color: $text_faint;
     height: auto;
     width: 100%;
     overflow-x: auto;
@@ -100,7 +100,7 @@ Button:focus {
 }
 
 #timeline-summary {
-    color: #666;
+    color: $text_faint;
     margin: 0;
 }
 
@@ -118,14 +118,14 @@ Button:focus {
     text-style: bold;
     text-align: left;
     height: auto;
-    color: #fff;
+    color: $text;
     margin: 0;
 }
 
 #next-change-info {
     text-style: bold;
     text-align: left;
-    color: #888;
+    color: $text_dim;
     height: auto;
     margin: 0;
 }
@@ -134,14 +134,14 @@ Button:focus {
     text-style: bold;
     text-align: left;
     height: auto;
-    color: #D96800;
+    color: $accent;
     margin: 0;
 }
 
 #off-schedule-text {
     text-align: left;
     height: auto;
-    color: #888;
+    color: $text_dim;
     margin: 0;
     margin-top: 1;
     margin-bottom: 1;
@@ -149,39 +149,56 @@ Button:focus {
 
 /* ============ STATUS INDICATORS ============ */
 .status-indicator-on {
-    color: #D96800;
+    color: $accent;
     text-style: bold;
 }
 
 .status-indicator-off {
-    color: #666;
+    color: $text_faint;
 }
 
 Static {
-    color: #666;
+    color: $text_faint;
     padding: 0;
     margin: 0;
 }
 
 /* ============ MODAL STYLES ============ */
 .modal-container,
+.dialog-container,
+.lookup-container,
+.help-container,
+.theme-container {
+    height: auto;
+    border: solid $accent;
+    background: $bg;
+    padding: 1;
+    align: center middle;
+}
+
+.modal-container,
 .dialog-container {
     width: auto;
-    height: auto;
-    border: solid #D96800;
-    background: #1a1a1a;
-    padding: 1;
+}
+
+.lookup-container,
+.help-container,
+.theme-container {
+    width: 60;
 }
 
 .modal-title,
-.dialog-title {
+.dialog-title,
+.lookup-title,
+.help-title,
+.theme-title {
     text-style: bold;
-    color: #D96800;
+    color: $accent;
     margin-bottom: 1;
 }
 
 .modal-message {
-    color: #888;
+    color: $text_dim;
     margin-bottom: 1;
 }
 
@@ -195,7 +212,7 @@ Static {
 .modal-grid Button,
 .dialog-grid Button {
     background: transparent;
-    color: #888;
+    color: $text_dim;
     border: none;
     min-width: 0;
     padding: 0 2;
@@ -204,7 +221,7 @@ Static {
 
 .modal-grid Button:hover,
 .dialog-grid Button:hover {
-    color: #D96800;
+    color: $accent;
     background: transparent;
 }
 
@@ -223,7 +240,7 @@ Static {
 /* ============ LABEL ============ */
 Label {
     text-style: bold;
-    color: #D96800;
+    color: $accent;
     padding: 0;
     margin: 0;
     height: auto;
@@ -249,5 +266,41 @@ Label {
 /* ============ LEGEND HIDING ============ */
 .legend-hidden {
     display: none;
+}
+
+/* ============ SCREENS ============ */
+GroupSelectionScreen,
+GroupSelectDialog,
+AddressLookupDialog,
+HelpDialog,
+ThemeDialog {
+    align: center middle;
+}
+
+.lookup-title,
+.help-title,
+.theme-title {
+    align: center middle;
+}
+
+#street-input {
+    margin-bottom: 1;
+}
+
+#results-area {
+    height: 8;
+    border: solid $text_faint;
+    margin-bottom: 1;
+    padding: 1;
+}
+
+.lookup-actions {
+    layout: horizontal;
+    align: center middle;
+}
+
+.help-text {
+    color: $text_dim;
+    margin-bottom: 1;
 }
 

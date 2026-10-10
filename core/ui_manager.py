@@ -9,6 +9,7 @@ from textual.widgets import Static
 from core.config import NOTIFICATION_THRESHOLD, NOTIFICATIONS, STATUS_TEXTS
 from core.notifications import send_desktop_notification
 from core.preferences import desktop_notifications_enabled
+from core.themes import DEFAULT_THEME, colors_for
 from core.utils import (
     format_off_ranges,
     format_time_duration,
@@ -26,6 +27,10 @@ class UIManager:
         self.logger = logging.getLogger(__name__)
         self.showing_next_day = False
         self.notification_clear_timer = None
+
+    def colors(self) -> dict[str, str]:
+        """Colour tokens of the theme currently active in the app."""
+        return colors_for(getattr(self.app, 'theme_name', DEFAULT_THEME))
 
     def show_loading(self, is_loading: bool) -> None:
         loading_text = STATUS_TEXTS['loading'] if is_loading else ""
@@ -143,6 +148,8 @@ class UIManager:
         on_count = 0
         off_count = 0
         timeline_symbols = []
+        palette = self.colors()
+        on_color, off_color, now_color = palette['on'], palette['off'], palette['now']
 
         for i in range(48):
             hour = i // 2
@@ -161,15 +168,15 @@ class UIManager:
             if status == 'off':
                 off_count += 1
                 if is_current_time:
-                    timeline_symbols.append("[bold yellow]▲[#ff5555]□[/#ff5555][/bold yellow]")
+                    timeline_symbols.append(f"[{now_color}]▲[/{now_color}][{off_color}]□[/{off_color}]")
                 else:
-                    timeline_symbols.append("[#ff5555]□[/#ff5555]")
+                    timeline_symbols.append(f"[{off_color}]□[/{off_color}]")
             else:
                 on_count += 1
                 if is_current_time:
-                    timeline_symbols.append("[bold yellow]▲[#50fa7b]■[/#50fa7b][/bold yellow]")
+                    timeline_symbols.append(f"[{now_color}]▲[/{now_color}][{on_color}]■[/{on_color}]")
                 else:
-                    timeline_symbols.append("[#50fa7b]■[/#50fa7b]")
+                    timeline_symbols.append(f"[{on_color}]■[/{on_color}]")
 
         timeline_widget = safe_query("timeline-grid", Static, self.app)
         if timeline_widget:
@@ -366,9 +373,10 @@ class UIManager:
         off_mins = (off_count % 2) * 30
         on_text = f"{on_hours}год {on_mins}хв" if on_mins > 0 else f"{on_hours}год"
         off_text = f"{off_hours}год {off_mins}хв" if off_mins > 0 else f"{off_hours}год"
+        palette = self.colors()
         summary = (
-            f"[#50fa7b]■ є: {on_text}[/#50fa7b]  |  "
-            f"[#ff5555]□ немає: {off_text}[/#ff5555]  |  "
-            "[bold yellow]▲ зараз[/bold yellow]"
+            f"[{palette['on']}]■ є: {on_text}[/{palette['on']}]  |  "
+            f"[{palette['off']}]□ немає: {off_text}[/{palette['off']}]  |  "
+            f"[{palette['now']}]▲ зараз[/{palette['now']}]"
         )
         safe_widget_update(summary_widget, summary)
