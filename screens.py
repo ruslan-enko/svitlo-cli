@@ -156,6 +156,7 @@ class HelpDialog(Screen):
             "  [bold]e[/bold] - Експортувати розклад в календар (.ics)\n"
             "  [bold]f[/bold] - Переключити обрану групу (Favorites)\n"
             "  [bold]T[/bold] - Змінити тему оформлення\n"
+            "  [bold]n[/bold] - Увімкнути / вимкнути системні сповіщення\n"
             "  [bold]?[/bold] або [bold]h[/bold] - Довідка\n"
             "  [bold]q[/bold] - Вийти з програми\n\n"
             f"[bold {accent}]Позначення:[/bold {accent}]\n"

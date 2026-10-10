@@ -29,6 +29,7 @@ from core.config import (
 )
 from core.exporter import export_to_ics_file
 from core.preferences import (
+    desktop_notifications_enabled,
     get_favorites,
     get_saved_group,
     get_theme,
@@ -86,6 +87,7 @@ class SvitloApp(App):
         ("e", "export_ics", "Експорт ICS"),
         ("f", "toggle_favorite", "Favorites"),
         ("T", "change_theme", "Тема"),
+        ("n", "toggle_notifications", "Сповіщення"),
         ("h", "show_help", "Довідка"),
         ("question_mark", "show_help", "Довідка"),
         ("up", "scroll_up", "Вгору"),
@@ -332,6 +334,13 @@ class SvitloApp(App):
 
     def action_change_theme(self) -> None:
         self.push_screen(ThemeDialog())
+
+    def action_toggle_notifications(self) -> None:
+        enabled = not desktop_notifications_enabled()
+        save_preferences(self.current_group, enable_desktop_notifications=enabled)
+        self.ui_manager.show_notification(
+            "Системні сповіщення увімкнено" if enabled else "Системні сповіщення вимкнено"
+        )
 
     def action_export_ics(self) -> None:
         if self.schedule_data:
