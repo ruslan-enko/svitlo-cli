@@ -10,6 +10,7 @@ DEFAULT_THEME = "dark"
 THEMES: dict[str, dict[str, str]] = {
     "dark": {
         "bg": "#1a1a1a",
+        "focus_bg": "#2a2a2a",
         "accent": "#d96800",
         "text": "#ffffff",
         "text_dim": "#888888",
@@ -20,6 +21,7 @@ THEMES: dict[str, dict[str, str]] = {
     },
     "nord": {
         "bg": "#2e3440",
+        "focus_bg": "#3b4252",
         "accent": "#88c0d0",
         "text": "#eceff4",
         "text_dim": "#d8dee9",
@@ -30,6 +32,7 @@ THEMES: dict[str, dict[str, str]] = {
     },
     "catppuccin": {
         "bg": "#1e1e2e",
+        "focus_bg": "#313244",
         "accent": "#cba6f7",
         "text": "#cdd6f4",
         "text_dim": "#a6adc8",
@@ -40,6 +43,7 @@ THEMES: dict[str, dict[str, str]] = {
     },
     "high_contrast": {
         "bg": "#000000",
+        "focus_bg": "#1a1a1a",
         "accent": "#00ffff",
         "text": "#ffffff",
         "text_dim": "#e0e0e0",

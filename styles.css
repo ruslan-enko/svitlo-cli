@@ -35,6 +35,8 @@ Button:hover {
 
 Button:focus {
     border: none;
+    background: $focus_bg;
+    text-style: bold;
 }
 
 /* ============ ACTIONS ============ */
@@ -178,7 +180,8 @@ Static {
 
 .modal-container,
 .dialog-container {
-    width: auto;
+    width: 60;
+    max-width: 100%;
 }
 
 .lookup-container,
