@@ -205,6 +205,7 @@ Static {
 .modal-grid,
 .dialog-grid {
     layout: grid;
+    height: auto;
     margin-bottom: 1;
     align: center middle;
 }
@@ -228,6 +229,7 @@ Static {
 .modal-back-container,
 .dialog-back-container {
     layout: horizontal;
+    height: auto;
     align: center middle;
     margin-top: 1;
 }
@@ -296,6 +298,7 @@ ThemeDialog {
 
 .lookup-actions {
     layout: horizontal;
+    height: auto;
     align: center middle;
 }
 

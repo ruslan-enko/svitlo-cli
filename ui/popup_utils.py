@@ -1,7 +1,5 @@
 """Popup utilities for Svitlo CLI application."""
 
-__version__ = "0.44"
-
 from rich.style import Style
 from rich.text import Text
 
